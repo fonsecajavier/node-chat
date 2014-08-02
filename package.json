@@ -7,6 +7,7 @@
     "socket.io": "^1.0.6",
     "redis": "^0.11.0",
     "compression": "^1.0.9",
-    "node-sass": "^0.9.3"
+    "node-sass": "^0.9.3",
+    "swig": "^1.4.2"
   }
 }
