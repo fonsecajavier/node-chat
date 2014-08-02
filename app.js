@@ -5,6 +5,15 @@ var app = express();
 var compression = require('compression');
 app.use(compression());
 
+// this middleware is supposed to go right before the static configuration
+var sass = require('node-sass');
+app.use(sass.middleware({
+  src: __dirname + '/sass',
+  dest: __dirname + '/public',
+  debug: true,
+  outputStyle: 'compressed'
+}));
+
 var oneDay = 86400000;
 app.use(express.static(__dirname + '/public', { maxAge: oneDay }));
 
