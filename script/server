@@ -1,0 +1,2 @@
+#!/bin/bash
+nodemon -e js,html --ignore public/ app.js

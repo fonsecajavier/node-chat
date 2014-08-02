@@ -9,10 +9,8 @@ app.engine('html', swig.renderFile);
 app.set('view engine', 'html');
 app.set('views', __dirname + '/views');
 
-// TODO: delete me soon
-app.get('/test-view', function (req, res) {
-  res.render('my-first-view', { /* template locals context */ });
-});
+var defaultRoutes = require('./routes/index.js');
+app.use('/', defaultRoutes);
 
 // gzip/deflate outgoing responses
 var compression = require('compression');
