@@ -1,0 +1,2 @@
+var NodeChat = {};
+NodeChat.Controllers = {};

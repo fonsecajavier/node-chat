@@ -14,6 +14,10 @@ In case you still don't have nodemon:
 npm install -g nodemon
 ```
 
+Install bower components:
+```
+bower install
+```
 Start the server by running:
 ```sh
 script/server

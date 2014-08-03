@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<!--[if IE 9]><html class="lt-ie10" lang="en" > <![endif]-->
+<html class="no-js" lang="en" >
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>node.js chat app</title>
+  <link rel="stylesheet" type="text/css" href="/foundation.css">
+  <link rel="stylesheet" type="text/css" href="/bower_components/font-awesome/css/font-awesome.css">
+  <link rel="stylesheet" type="text/css" href="/main.css">
+  {% for tmpl in mustacheTemplates %}
+<script type="x-tmpl-mustache" id="tmpl-{{ tmpl.id }}" data-node-chat-tmpl="{{ tmpl.id }}">
+{{ tmpl.content | safe }}
+</script>
+  {% endfor %}
+  <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+  <script type="text/javascript" src="/bower_components/foundation/js/vendor/modernizr.js"></script>
+  <script type="text/javascript" src="/bower_components/underscore/underscore.js"></script>
+  <script type="text/javascript" src="/bower_components/jquery/dist/jquery.js"></script>
+  <script type="text/javascript" src="/bower_components/mustache/mustache.js"></script>
+  <script type="text/javascript" src="/bower_components/foundation/js/foundation.js"></script>
+  <script type="text/javascript" src="/bower_components/foundation/js/vendor/fastclick.js"></script>
+  {{ js("main") }}
+</head>
+<body>  
+  <h1>Hello world</h1>
+  Ready to start!
+</body>
+</html>

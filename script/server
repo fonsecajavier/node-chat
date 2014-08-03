@@ -1,2 +1,2 @@
 #!/bin/bash
-nodemon -e js,html --ignore public/ app.js
+nodemon -e js,html --ignore public/ --ignore assets/ app.js

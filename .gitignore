@@ -24,4 +24,7 @@ build/Release
 # see https://npmjs.org/doc/faq.html#Should-I-check-my-node_modules-folder-into-git
 node_modules
 
-public/css/main.css
+# TODO: we'd have to properly configure sass middleware and express so that they put CSS into public/css, also recognizing the right http routes (/css/*.css)
+public/*.css
+
+bower_components

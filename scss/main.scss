@@ -1,0 +1,20 @@
+@import "foundation_overrides";
+
+body {
+  color: red;
+  h1 {
+    color: green;
+  }
+}
+
+.nickname-modal{
+  /*max-width: 450px;*/
+  .button.connect:not([disabled]){
+    .enabled-legend{display:block};
+    .disabled-legend{display:none};
+  }
+  .button.connect[disabled]{
+    .enabled-legend{display:none};
+    .disabled-legend{display:block};
+  }
+}
