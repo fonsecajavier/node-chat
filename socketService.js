@@ -8,6 +8,12 @@ module.exports = function(http){
     var token = client.handshake.query.token;
     console.log("client connected: " + nickname + "#" + token);
 
+    chatKernel.subscribe(function(data){
+console.log("hula hula")
+console.log(data)
+      client.send(data);
+    });
+
     client.on("message", function(msg, ackFn){
       if(Object.prototype.toString.call(msg) != '[object Object]'){
         ackFn({error: "Invalid message. Should be a hash"});

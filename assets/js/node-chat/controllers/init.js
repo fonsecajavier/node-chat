@@ -49,6 +49,10 @@ NodeChat.Controllers.Init = NodeChat.BaseController.extend({
       _this.app.mediator.publish("clientConnected");
     });
 
+    this.app.socket.on('message', function(message) {
+      console.log("message received from server: " + (message));
+    });
+
     this.app.socket.json.send({type: "messageOfTheDay"}, function(ackData){
       _this.app.server.messageOfTheDay = ackData.messageOfTheDay;
       new NodeChat.Controllers.MessageOfTheDay( _this.app).openModal();

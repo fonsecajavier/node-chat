@@ -2,12 +2,15 @@ var redisClient = require('redisClient.js');
 var uuid = require('node-uuid');
 var async = require('async');
 
-var nicknameRegex = /[a-zA-Z][a-zA-Z\d-_]{2,15}/;
+
+redisClient.sub.subscribe("message");
         
 // Please look at "Chat Kernel data-layout" for more info
 
+exports.nicknameRegex = /[a-zA-Z][a-zA-Z\d-_]{2,15}/;
+
 exports.reserveNickname = function(nickname, callback){
-  var reservedKey = "user:name:" + nickname;
+  var reservedKey = "user:nickname:" + nickname;
 
   redisClient.store.multi()
     .get(reservedKey)
@@ -16,7 +19,7 @@ exports.reserveNickname = function(nickname, callback){
         callback({error: "Nickname was already selected by another user"})
       }
       else {
-        if(nicknameRegex.exec(nickname)){
+        if(exports.nicknameRegex.exec(nickname)){
           var reservedToken = uuid.v4();
           var ttl = 10000; // milliseconds
           redisClient.store.set([reservedKey, reservedToken, "PX", ttl], function (err, reply){
@@ -31,7 +34,7 @@ exports.reserveNickname = function(nickname, callback){
 }
 
 exports.connectClient = function(nickname, token, callback){
-  var reservedKey = "user:name:" + nickname;
+  var reservedKey = "user:nickname:" + nickname;
 
   redisClient.store.get(reservedKey, function (err, reply){
     if(reply == token){
@@ -56,7 +59,7 @@ exports.cleanupDisconnectedClient = function(nickname, token, callback){
   /*
   redisClient.store.multi()
     .del("user:" + token)
-    .del("user:name:" + nickname)
+    .del("user:nickname:" + nickname)
     .exec(function (err, replies){
       callback("OK");
     });
@@ -153,6 +156,7 @@ var _createRoomByName = function(data, callback){
       roomToken
     )
     .exec(function (err, replies){
+      //redisClient.sub.subscribe("room:" + roomToken);
       callback(roomToken)
     })
 }
@@ -243,7 +247,7 @@ var _joinUserToRoom = function(data, callback){
           "user:" + data.userToken + ":room:" + data.roomToken,
           "joinedAt", Date.now()
         )
-        .exec(function (err, replies){
+        .exec(function (err, replies){          
           callback({roomToken: data.roomToken});
         })
     } else {
@@ -373,6 +377,56 @@ exports.messageProcessor.unjoinRoomByToken = function(data, callback){
   });
 }
 
+
+exports.subscribe = function(callback){
+  redisClient.sub.on("message", function(channel, message){
+    data = JSON.parse(message);
+    console.log("hola amiguitos");
+    
+    console.log(channel);
+    console.log(data);
+
+
+    _findUserInRoom(data, function(presenceExists){
+      console.log( "usuario existe " + presenceExists);
+      if(presenceExists){
+        callback(message);
+      }
+    });
+  });
+}
+/*
+  publishUserMessage
+    roomToken: <room token>
+    userToken: <user token>
+
+  Uses the Redis PUB/SUB API in order to publish a message from an user to
+  the channel identified by the room token.
+
+  callback
+    {status: "OK"}
+    or hash with error key in case the user doesn't exist anymore.
+*/
+exports.messageProcessor.publishUserMessage = function(data, callback){
+  redisClient.store.hgetall("user:" + data.userToken, function(err, user){
+    if(user){
+      redisClient.pub.publish(
+        "message",//"room:" + data.roomToken,
+        JSON.stringify({
+          type: "userMessage",
+          userToken: data.userToken,
+          message: data.msg,
+          roomToken: data.roomToken
+        })
+      );
+      callback({status: "OK"});
+    }
+    else{
+      callback({error: "Can't publish message because user doesn't exist anymore"});
+    }
+  });
+}
+
 // Functions map and possible aliases.
 exports.validMessages = {
   "messageOfTheDay": "messageOfTheDay",
@@ -381,7 +435,8 @@ exports.validMessages = {
   "usersListByRoom": "usersListByRoom",
   "joinRoomByName": "joinRoomByName",
   "joinRoomByToken": "joinRoomByToken",
-  "unjoinRoomByToken": "unjoinRoomByToken",  
+  "unjoinRoomByToken": "unjoinRoomByToken",
+  "publishUserMessage": "publishUserMessage"
 };
 
 exports.processMessage = function(msg, callback){
@@ -395,7 +450,7 @@ exports.processMessage = function(msg, callback){
     return;
   }
 
-  var stringifiedData = JSON.stringify(msg.data) || "";
+  var stringifiedData = JSON.stringify(msg) || "";
   console.log("processing protocol message from userToken " + msg.userToken + " [" + msg.type + "] " + stringifiedData);
 
   exports.messageProcessor[exports.validMessages[msg.type]](msg, callback);
