@@ -2,12 +2,12 @@ var redisClient = require('redisClient.js');
 var uuid = require('node-uuid');
 var async = require('async');
 
-var nicknameRegex = /[a-zA-Z][a-zA-Z\d-_]{2,15}/;
-        
 // Please look at "Chat Kernel data-layout" for more info
 
+exports.nicknameRegex = /[a-zA-Z][a-zA-Z\d-_]{2,15}/;
+
 exports.reserveNickname = function(nickname, callback){
-  var reservedKey = "user:name:" + nickname;
+  var reservedKey = "user:nickname:" + nickname;
 
   redisClient.store.multi()
     .get(reservedKey)
@@ -16,7 +16,7 @@ exports.reserveNickname = function(nickname, callback){
         callback({error: "Nickname was already selected by another user"})
       }
       else {
-        if(nicknameRegex.exec(nickname)){
+        if(exports.nicknameRegex.exec(nickname)){
           var reservedToken = uuid.v4();
           var ttl = 10000; // milliseconds
           redisClient.store.set([reservedKey, reservedToken, "PX", ttl], function (err, reply){
@@ -31,7 +31,7 @@ exports.reserveNickname = function(nickname, callback){
 }
 
 exports.connectClient = function(nickname, token, callback){
-  var reservedKey = "user:name:" + nickname;
+  var reservedKey = "user:nickname:" + nickname;
 
   redisClient.store.get(reservedKey, function (err, reply){
     if(reply == token){
@@ -56,7 +56,7 @@ exports.cleanupDisconnectedClient = function(nickname, token, callback){
   /*
   redisClient.store.multi()
     .del("user:" + token)
-    .del("user:name:" + nickname)
+    .del("user:nickname:" + nickname)
     .exec(function (err, replies){
       callback("OK");
     });
@@ -395,7 +395,7 @@ exports.processMessage = function(msg, callback){
     return;
   }
 
-  var stringifiedData = JSON.stringify(msg.data) || "";
+  var stringifiedData = JSON.stringify(msg) || "";
   console.log("processing protocol message from userToken " + msg.userToken + " [" + msg.type + "] " + stringifiedData);
 
   exports.messageProcessor[exports.validMessages[msg.type]](msg, callback);

@@ -2,7 +2,7 @@ NodeChat.ClientApp = Class.extend({
   lastDebugSocketResponse: null,
 
   init: function(){
-    this.debug
+
   },
 
   // debug tools:
