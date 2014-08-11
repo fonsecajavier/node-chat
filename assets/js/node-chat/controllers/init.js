@@ -38,15 +38,19 @@ NodeChat.Controllers.Init = NodeChat.BaseController.extend({
 
   proceedConnecting: function(data){
     var _this = this;
-    this.handshakeData = data;
+    this.app.handshakeData = data;
 
     this.app.socket = new io.connect('http://localhost', {
-      query: $.param(this.handshakeData)
+      query: $.param(this.app.handshakeData)
     });
 
     this.app.socket.on('connect', function() {
       console.log("Connected");
       _this.app.mediator.publish("clientConnected");
+    });
+
+    this.app.socket.on("message", function(message) {
+      console.log("message received from server: " + JSON.stringify(message));
     });
 
     this.app.socket.json.send({type: "messageOfTheDay"}, function(ackData){

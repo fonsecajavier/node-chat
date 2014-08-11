@@ -5,7 +5,7 @@ NodeChat.ClientApp = Class.extend({
 
   },
 
-  // debug tools:
+  // debug tool:
   sendCommand: function(data){
     var _this = this;
     this.socket.json.send(data, function(ackData){

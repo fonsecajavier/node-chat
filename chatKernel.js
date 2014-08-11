@@ -93,6 +93,7 @@ exports.messageProcessor.roomsList = function(data, outerCallback){
     var rooms = [];
     async.map(roomsList, function(roomToken, callback){
       redisClient.store.hgetall(["room:" + roomToken], function(err, roomData){
+        roomData.token = roomToken;
         callback(err, roomData);
       })
     }, function(err, results){
@@ -115,8 +116,9 @@ exports.messageProcessor.usersListByRoom = function(data, outerCallback){
 
     var users = [];
     async.map(usersList, function(userToken, callback){
-      redisClient.store.hgetall(["user:" + userToken], function(err, userData){
-        callback(err, userData);
+      redisClient.store.hgetall(["user:" + userToken], function(err, user){
+        user.token = userToken
+        callback(err, user);
       })
     }, function(err, results){
       outerCallback({usersList: results});
@@ -153,6 +155,7 @@ var _createRoomByName = function(data, callback){
       roomToken
     )
     .exec(function (err, replies){
+      redisClient.sub.subscribe("room:" + roomToken);
       callback(roomToken)
     })
 }
@@ -217,7 +220,7 @@ var _findUserInRoom = function(data, callback){
 
   NOT EXPORTABLE (NOT NEEDED IN THE NET PROTOCOL)
 */
-var _joinUserToRoom = function(data, callback){
+var _joinUserToRoom = function(data, callback, socketClient){
   _findUserInRoom(data, function(presenceExists){
     if(!presenceExists){
       redisClient.store.multi()
@@ -265,7 +268,7 @@ var _joinUserToRoom = function(data, callback){
 
   NOT EXPORTABLE (NOT NEEDED IN THE NET PROTOCOL)
 */
-var _unjoinUserFromRoom = function(data, callback){
+var _unjoinUserFromRoom = function(data, callback, socketClient){
   _findUserInRoom(data, function(presenceExists){
     if(presenceExists){
       redisClient.store.multi()
@@ -310,21 +313,21 @@ var _unjoinUserFromRoom = function(data, callback){
     
     Returns a hash with an error if user already joined an existing room
 */
-exports.messageProcessor.joinRoomByName = function(data, callback){
+exports.messageProcessor.joinRoomByName = function(data, callback, socketClient){
   _findRoomByName(data, function(roomToken){
     if(!roomToken){
       _createRoomByName(data, function(newRoomToken){
         data.roomToken = newRoomToken;
         _joinUserToRoom(data, function(reply){
           callback(reply);
-        });
+        }, socketClient);
       });
     }
     else {
       data.roomToken = roomToken;
       _joinUserToRoom(data, function(reply){
         callback(reply);
-      });
+      }, socketClient);
     }
   });
 }
@@ -339,12 +342,12 @@ exports.messageProcessor.joinRoomByName = function(data, callback){
   Returns a hash with an error key if room token doesn't exist
   or if user already joined that room
 */
-exports.messageProcessor.joinRoomByToken = function(data, callback){
+exports.messageProcessor.joinRoomByToken = function(data, callback, socketClient){
   _findRoomByToken(data, function(roomExists){
     if(roomExists){
       _joinUserToRoom(data, function(reply){
         callback(reply)
-      });
+      }, socketClient);
     } else {
       callback({error: "Room with such token doesn't exist"});
     }
@@ -361,17 +364,96 @@ exports.messageProcessor.joinRoomByToken = function(data, callback){
   Returns a hash with an error key if room token doesn't exist
   or if user hadn't joined this room.
 */
-exports.messageProcessor.unjoinRoomByToken = function(data, callback){
+exports.messageProcessor.unjoinRoomByToken = function(data, callback, socketClient){
   _findRoomByToken(data, function(roomExists){
     if(roomExists){
       _unjoinUserFromRoom(data, function(reply){
         callback(reply)
-      });
+      }, socketClient);
     } else {
       callback({error: "Room with such token doesn't exist"});
     }
   });
 }
+
+/*
+  subscribe
+    socketClient: <socket client>
+*/
+exports.subscribe = function(socketClient){
+  redisClient.sub.on("message", function(channel, message){
+    data = JSON.parse(message);
+  
+    _findUserInRoom({userToken: socketClient.userToken, roomToken: data.roomToken}, function(presenceExists){
+      if(presenceExists){
+        socketClient.send(data);
+      }
+    });
+  });
+}
+/*
+  publishUserMessage
+    roomToken: <room token>
+    userToken: <user token>
+
+  Uses the Redis PUB/SUB API in order to publish a message from an user to
+  the channel identified by the room token.
+
+  callback
+    {status: "OK"}
+    or hash with error key in case the user doesn't exist anymore or if he
+    doesn't belong to that room
+*/
+exports.messageProcessor.publishUserMessage = function(data, callback){
+  redisClient.store.multi()
+    .hgetall("user:" + data.userToken)
+    .exists("user:" + data.userToken + ":room:" + data.roomToken)
+    .exec(function(err, replies){
+      user = replies[0];
+      userExistsInRoom = replies[1];
+      if(!user){
+        callback({error: "Can't publish message because user doesn't exist anymore"});
+        return;
+      }
+      if(!userExistsInRoom){
+        callback({error: "User doesn't exist in this room"});
+        return;
+      }
+      var channel = "room:" + data.roomToken;
+      var payload = JSON.stringify({
+          type: "userMessage",
+          userToken: data.userToken,
+          userNickname: user.nickname,
+          message: data.msg,
+          roomToken: data.roomToken
+        })
+
+      redisClient.pub.publish(channel, payload);
+      callback({status: "OK"});
+    });
+}
+/*
+exports.messageProcessor.publishUserMessage = function(data, callback){
+  redisClient.store.hgetall("user:" + data.userToken, function(err, user){
+    if(user){
+      var channel = "room:" + data.roomToken;
+      var payload = JSON.stringify({
+          type: "userMessage",
+          userToken: data.userToken,
+          userNickname: user.nickname,
+          message: data.msg,
+          roomToken: data.roomToken
+        })
+
+      redisClient.pub.publish(channel, payload);
+      callback({status: "OK"});
+    }
+    else{
+      callback({error: "Can't publish message because user doesn't exist anymore"});
+    }
+  });
+}
+*/
 
 // Functions map and possible aliases.
 exports.validMessages = {
@@ -381,10 +463,11 @@ exports.validMessages = {
   "usersListByRoom": "usersListByRoom",
   "joinRoomByName": "joinRoomByName",
   "joinRoomByToken": "joinRoomByToken",
-  "unjoinRoomByToken": "unjoinRoomByToken",  
+  "unjoinRoomByToken": "unjoinRoomByToken",
+  "publishUserMessage": "publishUserMessage"
 };
 
-exports.processMessage = function(msg, callback){
+exports.processMessage = function(msg, callback, socketClient){
   if(!msg.userToken){
     callback({error: "Invalid message. Should provide userToken"});
     return;
@@ -398,5 +481,5 @@ exports.processMessage = function(msg, callback){
   var stringifiedData = JSON.stringify(msg) || "";
   console.log("processing protocol message from userToken " + msg.userToken + " [" + msg.type + "] " + stringifiedData);
 
-  exports.messageProcessor[exports.validMessages[msg.type]](msg, callback);
+  exports.messageProcessor[exports.validMessages[msg.type]](msg, callback, socketClient);
 }
