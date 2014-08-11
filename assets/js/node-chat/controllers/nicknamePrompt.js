@@ -1,5 +1,5 @@
-NodeChat.Controllers.NicknamePrompt = NodeChat.BaseController.extend({
-  $modal: null,
+NodeChat.Controllers.NicknamePrompt = NodeChat.ModalController.extend({
+  selector: "[data-nickname-prompt]",
 
   init: function(app){
     this._super( app );
@@ -9,12 +9,8 @@ NodeChat.Controllers.NicknamePrompt = NodeChat.BaseController.extend({
 
   render: function(){
     var rendered = Mustache.render(this.app.templates.nicknamePrompt, {})
+    this.appendDOM(rendered);
 
-    this.destroyModalDOM();
-
-    this.app.$container.append(rendered);
-
-    this.$modal = this.$findModal();
     this.$chatConnect = this.$modal.find("[data-chat-connect]");
     this.$alertContainer = this.$modal.find("[data-alert-container]");
     this.$nicknameInput = this.$modal.find("[data-nickname-input]");
@@ -22,7 +18,8 @@ NodeChat.Controllers.NicknamePrompt = NodeChat.BaseController.extend({
 
   bindEvents: function(){
     this.bindChatConnect();
-    this.bindBeforeCloseModal();
+    this.bindAfterOpenModal();
+    this.bindAfterCloseModal();
   },
 
   bindChatConnect: function(){
@@ -43,12 +40,23 @@ NodeChat.Controllers.NicknamePrompt = NodeChat.BaseController.extend({
 
   },
 
-  bindBeforeCloseModal: function(){
+
+  bindAfterOpenModal: function(){
     var _this = this;
 
-    this.$modal.bind("closed", function(){
+    // TODO FIXME: Current event should be: 'opened.fndtn.reveal', but foundation has a bug that fires it twice.  See https://github.com/zurb/foundation/issues/5482
+    $(document).on('opened', this.selector, function(){
+      _this.$nicknameInput.focus();
+    });
+  },
+
+  bindAfterCloseModal: function(){
+    var _this = this;
+
+    // TODO FIXME: Current event should be: 'closed.fndtn.reveal', but foundation has a bug that fires it twice.  See https://github.com/zurb/foundation/issues/5482
+    $(document).on('closed', this.selector, function(){
       _this.app.mediator.remove("clientConnected", _this.connectionSuccess);
-    })
+    });
   },
 
   disableConnectButton: function(){
@@ -59,10 +67,10 @@ NodeChat.Controllers.NicknamePrompt = NodeChat.BaseController.extend({
     this.$chatConnect.removeAttr("disabled");
   },
 
-  showAlert: function(htmlContent, htmlClass){
+  showAlert: function(msg, htmlClass){
     new NodeChat.Controllers.Alert(this.app, {
         htmlClass: htmlClass,
-        htmlContent: htmlContent,
+        content: msg,
         $container: this.$alertContainer
       });
   },
@@ -98,37 +106,10 @@ NodeChat.Controllers.NicknamePrompt = NodeChat.BaseController.extend({
     });
   },
 
-  openModal: function(){
-    this.$modal.foundation('reveal', 'open');
-  },
-
-  closeModal: function(){
-    this.$modal.foundation('reveal', 'close');
-  },
-
-  $findModal: function(){
-    return this.$appContainer.find("[data-nickname-prompt]");
-  },
-
-  destroyModalDOM: function(){
-    var $modal = this.$findModal();
-
-    if ($modal){
-      $modal.remove();
-      return true;
-    } else {
-      return false;
-    }
-  },
-
   connectionSuccess: function(){
     var _this = this;
 
     this.showAlert(
         "Success!!", "success");
-
-    setTimeout(function(){
-      _this.closeModal();
-    }, 1000);
   }
 });

@@ -1,58 +1,57 @@
-NodeChat.Controllers.Init = Class.extend({
-  templates: {},
-  $container: null,
-  navBar: null,
-  nicknamePrompt: null,
-  mediator: null,
+NodeChat.Controllers.Init = NodeChat.BaseController.extend({
+  app: null,
   handshakeData: null,
-  socket: null,
 
-  init: function($container){
-    this.$container = $container;
+  init: function( app, $container ){
+    this._super( app );
+
+    this.app.$container = $container;
+    this.app.server = {};
     this.loadTemplates();
     this.loadNavBar();
-    this.loadNicknamePrompt();
     this.showNicknamePrompt();
     this.initializeMediator();
   },
 
   loadTemplates: function(){
-    var _this = this; 
+    var _this = this;
+    this.app.templates = {};
     _.each($("[data-node-chat-tmpl]"), function(htmlElement){
       var key = $(htmlElement).attr("data-node-chat-tmpl");
-      _this.templates[key] = $(htmlElement).html();
-      Mustache.parse(_this.templates[key]);
+      _this.app.templates[key] = $(htmlElement).html();
+      Mustache.parse(_this.app.templates[key]);
     });
   },
 
   loadNavBar: function(){
-    this.navBar = new NodeChat.Controllers.NavBar( this );
-  },
-
-  loadNicknamePrompt: function(){
-    this.nicknamePrompt = new NodeChat.Controllers.NicknamePrompt( this );
+    this.app.navBar = new NodeChat.Controllers.NavBar( this.app );
   },
 
   showNicknamePrompt: function(){
-    this.nicknamePrompt.openModal();
+    new NodeChat.Controllers.NicknamePrompt( this.app ).openModal();
   },
 
   initializeMediator: function(){
-    this.mediator = new Mediator();
-    this.mediator.subscribe("proceedConnecting", this.proceedConnecting, {}, this);
+    this.app.mediator = new Mediator();
+    this.app.mediator.subscribe("proceedConnecting", this.proceedConnecting, {}, this);
   },
 
   proceedConnecting: function(data){
     var _this = this;
     this.handshakeData = data;
 
-    this.socket = new io.connect('http://localhost', {
+    this.app.socket = new io.connect('http://localhost', {
       query: $.param(this.handshakeData)
     });
 
-    this.socket.on('connect', function() {
+    this.app.socket.on('connect', function() {
       console.log("Connected");
-      _this.mediator.publish("clientConnected");
+      _this.app.mediator.publish("clientConnected");
+    });
+
+    this.app.socket.json.send({type: "messageOfTheDay"}, function(ackData){
+      _this.app.server.messageOfTheDay = ackData.messageOfTheDay;
+      new NodeChat.Controllers.MessageOfTheDay( _this.app).openModal();
     });
   }
 });

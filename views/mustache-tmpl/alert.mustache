@@ -1,4 +1,9 @@
 <div data-alert class="alert-box {{ htmlClass }}">
-  {{{ htmlContent }}}
+  {{#htmlContent}}
+    {{{ htmlContent }}}
+  {{/htmlContent}}
+  {{^htmlContent}}
+    {{ content }}
+  {{/htmlContent}}
   <a href="#" class="close">&times;</a>
 </div>

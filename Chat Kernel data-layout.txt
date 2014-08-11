@@ -1,0 +1,37 @@
+Chat Kernel data-layout
+=========================
+
+"reservedNickname:<nickname>" STRING
+  <user_token>
+
+"user:<token>" HASH
+  nickname: <nickname string>
+  connectedAt: <timestamp>
+
+"user:<user_token>:rooms" SET
+  <room_token>
+
+--------------------------
+
+
+"roomsList" SORTED SET
+  <room_token> SCORE: <user count>
+
+"room:name:<room_name>" STRING
+  <room_token>
+
+"room:<token>" HASH
+  name: <string>
+  createdAt: <timestamp>
+  usersCount: <integer>
+  topic: <string>
+
+"room:<room_token>:users" SET
+  <user_token>
+
+--------------------------
+
+
+"user:<user_token>:room:<room_token>" HASH
+  joinedAt: <timestamp>
+

@@ -21,6 +21,7 @@
     "foundation": "~5.3.3",
     "mustache": "~0.8.2",
     "font-awesome": "~4.1.0",
-    "underscore": "~1.6.0"
+    "underscore": "~1.6.0",
+    "listjs": "~1.1.1"
   }
 }

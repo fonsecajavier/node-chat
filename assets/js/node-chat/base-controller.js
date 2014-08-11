@@ -1,11 +1,12 @@
 NodeChat.BaseController = Class.extend({
   app: null,
   id: null,
-  $appContainer: null,
 
   init: function(app){
+    if(!app){
+      throw "Must provide an 'app' instance to this controller";
+    }
     this.app = app;
-    this.$appContainer = app.$container;
     this.setId();
   },
 
