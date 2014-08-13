@@ -18,6 +18,7 @@ NodeChat.Controllers.NicknamePrompt = NodeChat.ModalController.extend({
 
   bindEvents: function(){
     this.bindChatConnect();
+    this.bindInterceptCarriageReturn();
     this.bindAfterOpenModal();
     this.bindAfterCloseModal();
   },
@@ -40,6 +41,17 @@ NodeChat.Controllers.NicknamePrompt = NodeChat.ModalController.extend({
 
   },
 
+  bindInterceptCarriageReturn: function(){
+    var _this = this;
+    this.$nicknameInput.keydown(function(e){
+      var keyCode = e.keyCode || e.which;
+
+      if (keyCode == 13) {
+        _this.$chatConnect.trigger("click");
+        return false;
+      }
+    });
+  },
 
   bindAfterOpenModal: function(){
     var _this = this;
