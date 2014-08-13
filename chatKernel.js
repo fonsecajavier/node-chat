@@ -63,7 +63,7 @@ exports.cleanupDisconnectedClient = function(nickname, token, callback){
   */
 }
 
-exports.messageProcessor = {};
+var messageProcessor = {};
 
 /*
   messageOfTheDay
@@ -75,7 +75,7 @@ exports.messageProcessor = {};
     as soon as he connects
 */
 
-exports.messageProcessor.messageOfTheDay = function(data, callback){
+messageProcessor.messageOfTheDay = function(data, callback){
   var motd = "Thanks for joining our chat server. We hope you enjoy your stay.\n\nWarm regards,\n\n- Javier Fonseca";
   callback({messageOfTheDay: motd});
 }
@@ -87,7 +87,7 @@ exports.messageProcessor.messageOfTheDay = function(data, callback){
     An array containing the list of rooms available in the server,
     sorted in descending order by their users count
 */
-exports.messageProcessor.roomsList = function(data, outerCallback){
+messageProcessor.roomsList = function(data, outerCallback){
   redisClient.store.zrevrangebyscore(["roomsListRanked", "+inf", "-inf"], function(err, roomsList){
 
     var rooms = [];
@@ -109,7 +109,7 @@ exports.messageProcessor.roomsList = function(data, outerCallback){
   callback  
     An array containing the list of users in a room, in no particular order
 */
-exports.messageProcessor.usersListByRoom = function(data, outerCallback){
+messageProcessor.usersListByRoom = function(data, outerCallback){
   var key = "room:" + data.roomToken + ":users";
 
   redisClient.store.smembers(key, function(err, usersList){
@@ -316,7 +316,7 @@ var embedUserToken = function(data, chatClient){
     
     Returns a hash with an error if user already joined an existing room
 */
-exports.messageProcessor.joinRoomByName = function(chatClient, data, callback){
+messageProcessor.joinRoomByName = function(chatClient, data, callback){
   embedUserToken(data, chatClient);
   _findRoomByName(data, function(roomToken){
     if(!roomToken){
@@ -346,7 +346,7 @@ exports.messageProcessor.joinRoomByName = function(chatClient, data, callback){
   Returns a hash with an error key if room token doesn't exist
   or if user already joined that room
 */
-exports.messageProcessor.joinRoomByToken = function(chatClient, data, callback){
+messageProcessor.joinRoomByToken = function(chatClient, data, callback){
   embedUserToken(data, chatClient);
   _findRoomByToken(data, function(roomExists){
     if(roomExists){
@@ -369,7 +369,7 @@ exports.messageProcessor.joinRoomByToken = function(chatClient, data, callback){
   Returns a hash with an error key if room token doesn't exist
   or if user hadn't joined this room.
 */
-exports.messageProcessor.unjoinRoomByToken = function(chatClient, data, callback){
+messageProcessor.unjoinRoomByToken = function(chatClient, data, callback){
   embedUserToken(data, chatClient);
   _findRoomByToken(data, function(roomExists){
     if(roomExists){
@@ -410,7 +410,7 @@ exports.subscribe = function(chatClient){
     or hash with error key in case the user doesn't exist anymore or if he
     doesn't belong to that room
 */
-exports.messageProcessor.publishUserMessage = function(chatClient, data, callback){
+messageProcessor.publishUserMessage = function(chatClient, data, callback){
   redisClient.store.multi()
     .hgetall("user:" + chatClient.userToken)
     .exists("room:" + data.roomToken)
@@ -466,7 +466,7 @@ exports.processMessage = function(chatClient, msg, callback){
 
   var stringifiedData = JSON.stringify(msg) || "";
   
-  var fn = exports.messageProcessor[fnName];
+  var fn = messageProcessor[fnName];
   if(fn.length == 2){
     fn(msg, callback);
   } else if(fn.length == 3){
