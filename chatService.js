@@ -99,7 +99,7 @@ function ChatService(chatClient, redisClient){
         roomToken
       )
       .exec(function (err, replies){
-        redisClient.sub.subscribe("room:" + roomToken);
+        redisClient.pub.publish("chatService:sync:subscribeChannel", roomToken);
         callback(roomToken)
       })
   }
@@ -330,8 +330,12 @@ function ChatService(chatClient, redisClient){
   */
   this.subscribe = function(){
     redisClient.sub.on("message", function(channel, message){
+      if(!(/^room:/).test(channel)){
+        return;
+      }
+
       data = JSON.parse(message);
-      
+
       _findUserInRoom({roomToken: data.roomToken, userToken: chatClient.userToken}, function(presenceExists){
         if(presenceExists){
           chatClient.client.send(data);
@@ -465,7 +469,7 @@ ChatService.reserveNickname = function(redisClient, nickname, callback){
         callback({error: "Nickname was already selected by another user"})
       }
       else {
-        if(_this.nicknameRegex.exec(nickname)){
+        if(_this.nicknameRegex.test(nickname)){
           var reservedToken = uuid.v4();
           var ttl = 10000; // milliseconds
           redisClient.store.set([reservedKey, reservedToken, "PX", ttl], function (err, reply){
@@ -491,15 +495,23 @@ ChatService.roomsListTokens = function(redisClient, callback){
   });
 }
 
-ChatService.subscribeExistingChannels = function(redisClient, callback){
+ChatService.subscribeExistingChannels = function(redisClient){
   this.roomsListTokens(redisClient, function(roomTokens){
     roomTokens.forEach(function(roomToken){
       console.log("Subscribing to existing room " + roomToken);
       redisClient.sub.subscribe("room:" + roomToken);
     });
-    if(callback){
-      callback(true)
-    }
+
+    // a worker will notify all the others about subscribing to a specific channel by publishing to this one:
+    redisClient.sub.subscribe("chatService:sync:subscribeChannel");
+    redisClient.sub.on("message", function(channel, message){
+      if(channel != "chatService:sync:subscribeChannel"){
+        return;
+      }
+      var channel = "room:" + message;
+      console.log("subscribing to channel: " + channel);
+      redisClient.sub.subscribe(channel);
+    });
   })
 }
 

@@ -28,7 +28,7 @@ NodeChat.Controllers.NicknamePrompt = NodeChat.ModalController.extend({
       if ($(this).attr("disabled")){
         return false;
       }
-      if(/[a-zA-Z][a-zA-Z\d-_]{2,15}/.exec(_this.$nicknameInput.val())){
+      if(/[a-zA-Z][a-zA-Z\d-_]{2,15}/.test(_this.$nicknameInput.val())){
         _this.disableConnectButton();
         _this.connect();
       }
