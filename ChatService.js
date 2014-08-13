@@ -71,7 +71,7 @@ function ChatService(chatClient, redisClient){
   }
 
   /*
-    _createRoomByName
+    createRoomByName
       roomName: <room name>
       roomTopic: <string> (optional)
 
@@ -79,7 +79,7 @@ function ChatService(chatClient, redisClient){
       <room token>
     NOT EXPORTABLE TO ENSURE SECURITY, CLIENT MUST INVOKE joinRoomByName
   */
-  var _createRoomByName = function(data, callback){
+  var createRoomByName = function(data, callback){
     roomToken = uuid.v4();
     redisClient.store.multi()
       .hmset(
@@ -105,7 +105,7 @@ function ChatService(chatClient, redisClient){
   }
 
   /*
-    _findRoomByName
+    findRoomByName
       roomName: <room name>
 
     callback
@@ -113,14 +113,14 @@ function ChatService(chatClient, redisClient){
 
     NOT EXPORTABLE (NOT NEEDED IN THE NET PROTOCOL)
   */
-  var _findRoomByName = function(data, callback){
+  var findRoomByName = function(data, callback){
     redisClient.store.get("room:name:" + data.roomName, function(err, reply){
       callback(reply);
     });
   }
 
   /*
-    _findRoomByToken
+    findRoomByToken
       roomToken: <room token>
 
     callback
@@ -128,14 +128,14 @@ function ChatService(chatClient, redisClient){
 
     NOT EXPORTABLE (NOT NEEDED IN THE NET PROTOCOL)
   */
-  var _findRoomByToken = function(data, callback){
+  var findRoomByToken = function(data, callback){
     redisClient.store.exists("room:" + data.roomToken, function(err, reply){
       callback(reply);
     });
   }
 
   /*
-    _findUserInRoom
+    findUserInRoom
       roomToken: <room token>
       userToken: <user token>
 
@@ -144,7 +144,7 @@ function ChatService(chatClient, redisClient){
 
     NOT EXPORTABLE (NOT NEEDED IN THE NET PROTOCOL)
   */
-  var _findUserInRoom = function(data, callback){
+  var findUserInRoom = function(data, callback){
     var key = "user:" + data.userToken + ":room:" + data.roomToken;
     redisClient.store.exists(key, function (err, reply){
       callback(reply);
@@ -152,7 +152,7 @@ function ChatService(chatClient, redisClient){
   };
 
   /*
-    _joinUserToRoom
+    joinUserToRoom
       roomToken: <room token>
       userToken: <user token>
 
@@ -164,9 +164,9 @@ function ChatService(chatClient, redisClient){
 
     NOT EXPORTABLE (NOT NEEDED IN THE NET PROTOCOL)
   */
-  var _joinUserToRoom = function(data, callback){
+  var joinUserToRoom = function(data, callback){
     var _this = this
-    _findUserInRoom(data, function(presenceExists){
+    findUserInRoom(data, function(presenceExists){
       if(!presenceExists){
         redisClient.store.multi()
           .sadd(
@@ -201,7 +201,7 @@ function ChatService(chatClient, redisClient){
   }
 
   /*
-    _unjoinUserFromRoom
+    unjoinUserFromRoom
       roomToken: <room token>
       userToken: <user token>
 
@@ -213,8 +213,8 @@ function ChatService(chatClient, redisClient){
 
     NOT EXPORTABLE (NOT NEEDED IN THE NET PROTOCOL)
   */
-  var _unjoinUserFromRoom = function(data, callback){
-    _findUserInRoom(data, function(presenceExists){
+  var unjoinUserFromRoom = function(data, callback){
+    findUserInRoom(data, function(presenceExists){
       if(presenceExists){
         redisClient.store.multi()
           .srem(
@@ -263,18 +263,18 @@ function ChatService(chatClient, redisClient){
   */
   messageProcessor.joinRoomByName = function(data, callback){
     embedUserToken(data);
-    _findRoomByName(data, function(roomToken){
+    findRoomByName(data, function(roomToken){
       if(!roomToken){
-        _createRoomByName(data, function(newRoomToken){
+        createRoomByName(data, function(newRoomToken){
           data.roomToken = newRoomToken;
-          _joinUserToRoom(data, function(reply){
+          joinUserToRoom(data, function(reply){
             callback(reply);
           });
         });
       }
       else {
         data.roomToken = roomToken;
-        _joinUserToRoom(data, function(reply){
+        joinUserToRoom(data, function(reply){
           callback(reply);
         });
       }
@@ -292,9 +292,9 @@ function ChatService(chatClient, redisClient){
   */
   messageProcessor.joinRoomByToken = function(data, callback){
     embedUserToken(data);
-    _findRoomByToken(data, function(roomExists){
+    findRoomByToken(data, function(roomExists){
       if(roomExists){
-        _joinUserToRoom(data, function(reply){
+        joinUserToRoom(data, function(reply){
           callback(reply)
         });
       } else {
@@ -314,9 +314,9 @@ function ChatService(chatClient, redisClient){
   */
   messageProcessor.unjoinRoomByToken = function(data, callback){
     embedUserToken(data);
-    _findRoomByToken(data, function(roomExists){
+    findRoomByToken(data, function(roomExists){
       if(roomExists){
-        _unjoinUserFromRoom(data, function(reply){
+        unjoinUserFromRoom(data, function(reply){
           callback(reply)
         });
       } else {
@@ -336,7 +336,7 @@ function ChatService(chatClient, redisClient){
 
       data = JSON.parse(message);
 
-      _findUserInRoom({roomToken: data.roomToken, userToken: chatClient.userToken}, function(presenceExists){
+      findUserInRoom({roomToken: data.roomToken, userToken: chatClient.userToken}, function(presenceExists){
         if(presenceExists){
           chatClient.client.send(data);
         }

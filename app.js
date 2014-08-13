@@ -56,7 +56,7 @@ var SocketService = require('socketService');
 var socketService = new SocketService(http);
 
 var redisClient = require('redisClient');
-var ChatService = require('chatService');
+var ChatService = require('ChatService');
 ChatService.subscribeExistingChannels(redisClient);
 
 var httpPort = process.env.PORT || 3000;
