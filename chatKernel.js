@@ -220,7 +220,7 @@ var _findUserInRoom = function(data, callback){
 
   NOT EXPORTABLE (NOT NEEDED IN THE NET PROTOCOL)
 */
-var _joinUserToRoom = function(data, callback, socketClient){
+var _joinUserToRoom = function(data, callback){
   _findUserInRoom(data, function(presenceExists){
     if(!presenceExists){
       redisClient.store.multi()
@@ -268,7 +268,7 @@ var _joinUserToRoom = function(data, callback, socketClient){
 
   NOT EXPORTABLE (NOT NEEDED IN THE NET PROTOCOL)
 */
-var _unjoinUserFromRoom = function(data, callback, socketClient){
+var _unjoinUserFromRoom = function(data, callback){
   _findUserInRoom(data, function(presenceExists){
     if(presenceExists){
       redisClient.store.multi()
@@ -302,10 +302,13 @@ var _unjoinUserFromRoom = function(data, callback, socketClient){
   });
 }
 
+var embedUserToken = function(data, chatClient){
+  data.userToken = chatClient.userToken;
+}
+
 /*
   joinRoomByName
     roomName: <room name>
-    userToken: <user token>
 
   Joins an existing room, or creates one if it doesn't exist yet
 
@@ -313,21 +316,22 @@ var _unjoinUserFromRoom = function(data, callback, socketClient){
     
     Returns a hash with an error if user already joined an existing room
 */
-exports.messageProcessor.joinRoomByName = function(data, callback, socketClient){
+exports.messageProcessor.joinRoomByName = function(chatClient, data, callback){
+  embedUserToken(data, chatClient);
   _findRoomByName(data, function(roomToken){
     if(!roomToken){
       _createRoomByName(data, function(newRoomToken){
         data.roomToken = newRoomToken;
         _joinUserToRoom(data, function(reply){
           callback(reply);
-        }, socketClient);
+        });
       });
     }
     else {
       data.roomToken = roomToken;
       _joinUserToRoom(data, function(reply){
         callback(reply);
-      }, socketClient);
+      });
     }
   });
 }
@@ -335,19 +339,20 @@ exports.messageProcessor.joinRoomByName = function(data, callback, socketClient)
 /*
   joinRoomByToken
     roomToken: <room token>
-    userToken: <user token>
+    chatClient: <chat client>
 
   Joins a room by its token.
   Returns a hash with the room token if correct
   Returns a hash with an error key if room token doesn't exist
   or if user already joined that room
 */
-exports.messageProcessor.joinRoomByToken = function(data, callback, socketClient){
+exports.messageProcessor.joinRoomByToken = function(chatClient, data, callback){
+  embedUserToken(data, chatClient);
   _findRoomByToken(data, function(roomExists){
     if(roomExists){
       _joinUserToRoom(data, function(reply){
         callback(reply)
-      }, socketClient);
+      });
     } else {
       callback({error: "Room with such token doesn't exist"});
     }
@@ -355,21 +360,22 @@ exports.messageProcessor.joinRoomByToken = function(data, callback, socketClient
 }
 
 /*
-  joinRoomByToken
+  unjoinRoomByToken
     roomToken: <room token>
-    userToken: <user token>
+    chatClient: <chat client>
 
   Joins a room by its token.
   Returns a hash with a status "OK"
   Returns a hash with an error key if room token doesn't exist
   or if user hadn't joined this room.
 */
-exports.messageProcessor.unjoinRoomByToken = function(data, callback, socketClient){
+exports.messageProcessor.unjoinRoomByToken = function(chatClient, data, callback){
+  embedUserToken(data, chatClient);
   _findRoomByToken(data, function(roomExists){
     if(roomExists){
       _unjoinUserFromRoom(data, function(reply){
         callback(reply)
-      }, socketClient);
+      });
     } else {
       callback({error: "Room with such token doesn't exist"});
     }
@@ -378,15 +384,15 @@ exports.messageProcessor.unjoinRoomByToken = function(data, callback, socketClie
 
 /*
   subscribe
-    socketClient: <socket client>
+    chatClient: hash with userToken and "send" callback function
 */
-exports.subscribe = function(socketClient){
+exports.subscribe = function(chatClient){
   redisClient.sub.on("message", function(channel, message){
     data = JSON.parse(message);
-  
-    _findUserInRoom({userToken: socketClient.userToken, roomToken: data.roomToken}, function(presenceExists){
+    
+    _findUserInRoom({roomToken: data.roomToken, userToken: chatClient.userToken}, function(presenceExists){
       if(presenceExists){
-        socketClient.send(data);
+        chatClient.client.send(data);
       }
     });
   });
@@ -394,7 +400,7 @@ exports.subscribe = function(socketClient){
 /*
   publishUserMessage
     roomToken: <room token>
-    userToken: <user token>
+    chatClient: <chat client>
 
   Uses the Redis PUB/SUB API in order to publish a message from an user to
   the channel identified by the room token.
@@ -404,15 +410,21 @@ exports.subscribe = function(socketClient){
     or hash with error key in case the user doesn't exist anymore or if he
     doesn't belong to that room
 */
-exports.messageProcessor.publishUserMessage = function(data, callback){
+exports.messageProcessor.publishUserMessage = function(chatClient, data, callback){
   redisClient.store.multi()
-    .hgetall("user:" + data.userToken)
-    .exists("user:" + data.userToken + ":room:" + data.roomToken)
+    .hgetall("user:" + chatClient.userToken)
+    .exists("room:" + data.roomToken)
+    .exists("user:" + chatClient.userToken + ":room:" + data.roomToken)
     .exec(function(err, replies){
       user = replies[0];
-      userExistsInRoom = replies[1];
+      roomExists = replies[2];
+      userExistsInRoom = replies[2];
       if(!user){
-        callback({error: "Can't publish message because user doesn't exist anymore"});
+        callback({error: "Can't publish message because user doesn't exist"});
+        return;
+      }
+      if(!roomExists){
+        callback({error: "Can't publish message because room doesn't exist"});
         return;
       }
       if(!userExistsInRoom){
@@ -422,7 +434,7 @@ exports.messageProcessor.publishUserMessage = function(data, callback){
       var channel = "room:" + data.roomToken;
       var payload = JSON.stringify({
           type: "userMessage",
-          userToken: data.userToken,
+          userToken: chatClient.userToken,
           userNickname: user.nickname,
           message: data.msg,
           roomToken: data.roomToken
@@ -432,28 +444,6 @@ exports.messageProcessor.publishUserMessage = function(data, callback){
       callback({status: "OK"});
     });
 }
-/*
-exports.messageProcessor.publishUserMessage = function(data, callback){
-  redisClient.store.hgetall("user:" + data.userToken, function(err, user){
-    if(user){
-      var channel = "room:" + data.roomToken;
-      var payload = JSON.stringify({
-          type: "userMessage",
-          userToken: data.userToken,
-          userNickname: user.nickname,
-          message: data.msg,
-          roomToken: data.roomToken
-        })
-
-      redisClient.pub.publish(channel, payload);
-      callback({status: "OK"});
-    }
-    else{
-      callback({error: "Can't publish message because user doesn't exist anymore"});
-    }
-  });
-}
-*/
 
 // Functions map and possible aliases.
 exports.validMessages = {
@@ -467,19 +457,19 @@ exports.validMessages = {
   "publishUserMessage": "publishUserMessage"
 };
 
-exports.processMessage = function(msg, callback, socketClient){
-  if(!msg.userToken){
-    callback({error: "Invalid message. Should provide userToken"});
-    return;
-  }
-
-  if(!exports.validMessages[msg.type]){
+exports.processMessage = function(chatClient, msg, callback){
+  var fnName = exports.validMessages[msg.type];
+  if(!fnName){
     callback({error: "Invalid message. Don't know how to process this type of message"});
     return;
   }
 
   var stringifiedData = JSON.stringify(msg) || "";
-  console.log("processing protocol message from userToken " + msg.userToken + " [" + msg.type + "] " + stringifiedData);
-
-  exports.messageProcessor[exports.validMessages[msg.type]](msg, callback, socketClient);
+  
+  var fn = exports.messageProcessor[fnName];
+  if(fn.length == 2){
+    fn(msg, callback);
+  } else if(fn.length == 3){
+    fn(chatClient, msg, callback);
+  }
 }

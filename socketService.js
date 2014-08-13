@@ -6,10 +6,14 @@ module.exports = function(http){
   io.sockets.on("connection", function(client){
     var nickname = client.handshake.query.nickname;
     var token = client.handshake.query.token;
-    client.userToken = token; // shortcut
     console.log("client connected: " + nickname + "#" + token);
 
-    chatKernel.subscribe(client);
+    var chatClient = {
+      userToken: token,
+      client: client // callback function that receives a message hash as parameter
+    }
+
+    chatKernel.subscribe(chatClient);
 
     client.on("message", function(msg, ackFn){
       if(Object.prototype.toString.call(msg) != '[object Object]'){
@@ -22,9 +26,7 @@ module.exports = function(http){
         return;
       }
 
-      msg.userToken = token;
-
-      chatKernel.processMessage(msg, ackFn, client);
+      chatKernel.processMessage(chatClient, msg, ackFn);
     });
 
     client.on("disconnect", function(){
