@@ -1,9 +1,10 @@
 var express = require('express');
 var router = express.Router();
-var chatKernel = require('chatKernel');
+var redisClient = require('redisClient');
+var ChatService = require('chatService');
 
 router.post('/', function (req, res) {
-  chatKernel.reserveNickname(req.body.nickname, function(reply){
+  ChatService.reserveNickname(redisClient, req.body.nickname, function(reply){
     if(reply.error){
       res.statusCode = 406; // Not acceptable
     }

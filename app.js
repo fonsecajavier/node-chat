@@ -52,8 +52,12 @@ app.use('/', defaultRoutes);
 var connectRoutes = require('./routes/connect.js');
 app.use('/connect', connectRoutes);
 
-var SocketService = require('socketService.js');
+var SocketService = require('socketService');
 var socketService = new SocketService(http);
+
+var redisClient = require('redisClient');
+var ChatService = require('chatService');
+ChatService.subscribeExistingChannels(redisClient);
 
 var httpPort = process.env.PORT || 3000;
 http.listen(httpPort, function(){

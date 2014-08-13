@@ -1,4 +1,5 @@
-var chatKernel = require('chatKernel');
+var redisClient = require('redisClient');
+var ChatService = require('chatService');
 
 module.exports = function(http){
   var io = require('socket.io')(http);
@@ -13,7 +14,8 @@ module.exports = function(http){
       client: client // callback function that receives a message hash as parameter
     }
 
-    chatKernel.subscribe(chatClient);
+    var chatService = new ChatService(chatClient, redisClient);
+    chatService.subscribe();
 
     client.on("message", function(msg, ackFn){
       if(Object.prototype.toString.call(msg) != '[object Object]'){
@@ -26,13 +28,13 @@ module.exports = function(http){
         return;
       }
 
-      chatKernel.processMessage(chatClient, msg, ackFn);
+      chatService.processMessage(msg, ackFn);
     });
 
     client.on("disconnect", function(){
       // NOTE: we might now want to delete the user immediately, but wait a reasonable
       // amount of time before declaring him dead, giving them a chance to reconnect.
-      chatKernel.cleanupDisconnectedClient(nickname, token, function(status){
+      chatService.cleanupDisconnectedClient(nickname, token, function(status){
         if(status == "OK"){
           console.log("client disconnected: " + nickname + "#" + token);
         }
@@ -46,7 +48,7 @@ module.exports = function(http){
     var nickname = socket.request._query.nickname;
     var token = socket.request._query.token;
 
-    chatKernel.connectClient(nickname, token, function(status){
+    ChatService.connectClient(redisClient, nickname, token, function(status){
       if(status == "OK"){
         console.log("connection token validated for " + nickname + "#" + token);
         next();
@@ -54,7 +56,7 @@ module.exports = function(http){
         console.log("invalid connection token received: " + nickname + "#" + token);
         next(new Error(status.error));
       }
-    })
+    });
   });
 
 };
