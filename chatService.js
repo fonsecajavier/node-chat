@@ -7,9 +7,6 @@ var async = require('async');
 // Constructor
 // chatClient: hash with userToken and "send" callback function
 function ChatService(chatClient, redisClient){
-  this.chatClient = chatClient;
-  this.redisClient = redisClient;
-
   var messageProcessor = {};
 
   /*
