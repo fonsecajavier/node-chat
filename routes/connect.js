@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var redisClient = require('redisClient');
-var ChatService = require('chatService');
+var ChatService = require('ChatService');
 
 router.post('/', function (req, res) {
   ChatService.reserveNickname(redisClient, req.body.nickname, function(reply){

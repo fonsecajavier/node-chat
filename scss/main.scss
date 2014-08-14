@@ -19,3 +19,14 @@ body {
     .disabled-legend{display:block};
   }
 }
+
+.rooms-list-container {
+  ul.list {
+    li {
+      cursor: pointer;
+    }
+    li[data-selected] {
+      background-color: #D5D5D5;
+    }
+  }
+}

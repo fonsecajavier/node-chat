@@ -1,32 +1,7 @@
 <div class="reveal-modal rooms-list-modal medium" id="rooms-list" data-reveal data-rooms-list-modal>
-  <h3>Please search and select a room from the list</h3>
-
-  <input class="search" placeholder="Search" />
-  <button class="sort" data-sort="name">
-    Sort by name
-  </button>
-
-  <div data-rooms-list>
-    <ul class="list">
-      <li>
-        <h3 class="name">Ruby</h3>
-        <p class="topic">This is a Random Topic</p>
-      </li>
-      <li>
-        <h3 class="name">Node.js</h3>
-        <p class="topic">I really don't know what to write here</p>
-      </li>
-      <li>
-        <h3 class="name">Python</h3>
-        <p class="topic">I'm fine</p>
-      </li>
-      <li>
-        <h3 class="name">Go</h3>
-        <p class="topic">Learn Go the hard way</p>
-      </li>
-    </ul>
+  <div data-alert-container></div>
+  <div class="rooms-list-container" data-rooms-list>
+    <p>Loading rooms list, please wait... <i class="fa fa-spin fa-spinner"></i></p>
   </div>
-
-  <a href="#" class="button right" data-join-room-button>Join</a>
   <a class="close-reveal-modal">&#215;</a>
 </div>
