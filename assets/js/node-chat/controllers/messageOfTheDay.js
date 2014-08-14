@@ -1,16 +1,18 @@
 NodeChat.Controllers.MessageOfTheDay = NodeChat.ModalController.extend({
   selector: "[data-motd]",
   $closeModal: null,
+  messageOfTheDay: null,
 
-  init: function(app){
+  init: function(app, messageOfTheDay){
     this._super( app );
+    this.messageOfTheDay = messageOfTheDay;
     this.render();
     this.bindEvents();
   },
 
   render: function(){
     var _this = this;
-    var motd = _.escapeWithBr(this.app.server.messageOfTheDay);
+    var motd = _.escapeWithBr(this.messageOfTheDay);
     var rendered = Mustache.render(this.app.templates.messageOfTheDay, {messageOfTheDay: motd});
     this.appendDOM(rendered);
 
