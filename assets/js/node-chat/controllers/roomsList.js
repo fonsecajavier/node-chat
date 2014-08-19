@@ -66,7 +66,7 @@ NodeChat.Controllers.RoomsList = NodeChat.ModalController.extend({
     this.$joinRoomButton.on("click", function(evt){
       var $selectedItem = _this.$modal.find("[data-list]").find("li[data-selected]");
       if($selectedItem.length > 0){
-        console.log($selectedItem.attr("data-room-token"));
+        _this.app.joinRoomByToken($selectedItem.attr("data-room-token"));
       } else {
         _this.showAlert("Please select a channel", "warning");        
       }

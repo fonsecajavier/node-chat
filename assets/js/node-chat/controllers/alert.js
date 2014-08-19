@@ -12,5 +12,7 @@ NodeChat.Controllers.Alert = NodeChat.BaseController.extend({
     var rendered = Mustache.render(this.app.templates.alert, options)
 
     this.$container.html(rendered);
+
+    $(document).foundation('alert', 'reflow');
   }
 });

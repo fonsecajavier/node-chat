@@ -1,6 +1,7 @@
 NodeChat.ClientApp = Class.extend({
   lastDebugSocketResponse: null,
   mediator: null,
+  joinedRooms: {},
 
   init: function(){
     this.initializeMediator();
@@ -41,6 +42,10 @@ NodeChat.ClientApp = Class.extend({
 
   initializeMediator: function(){
     this.mediator = new Mediator();
+  },
+
+  joinRoomByToken: function(roomToken){
+    this.mediator.publish("setupChatRoomUI", roomToken);
   },
 
   // debug tool:

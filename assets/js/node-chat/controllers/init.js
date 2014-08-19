@@ -8,6 +8,7 @@ NodeChat.Controllers.Init = NodeChat.BaseController.extend({
     this.app.server = {};
     this.loadTemplates();
     this.loadNavBar();
+    this.loadChatRoomsManager();
     this.showNicknamePrompt();
     this.app.mediator.subscribe("proceedConnecting", this.proceedConnecting, {}, this);
   },
@@ -24,6 +25,10 @@ NodeChat.Controllers.Init = NodeChat.BaseController.extend({
 
   loadNavBar: function(){
     this.app.navBar = new NodeChat.Controllers.NavBar( this.app );
+  },
+
+  loadChatRoomsManager: function(){
+    new NodeChat.Controllers.ChatRoomsManager( this.app );
   },
 
   showNicknamePrompt: function(){

@@ -11,7 +11,6 @@ NodeChat.Controllers.NavBar = NodeChat.BaseController.extend({
   render: function(){
     var rendered = Mustache.render(this.app.templates.navBar, {})
 
-    //this.app.$container.prepend(rendered);
     this.$container = $(rendered).prependTo(this.app.$container);
 
     this.$roomsListOption = this.$container.find("[data-rooms-list-option]");

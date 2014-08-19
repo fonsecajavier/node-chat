@@ -7,7 +7,7 @@
 //= require node-chat/modal-controller.js
 //= require_tree node-chat/controllers
 
-$(document).foundation('alert','events'); // alert, events.  Required for alerts close button event.
+$(document).foundation();
 
 $(function() {
   window.app = new NodeChat.ClientApp();
