@@ -10,6 +10,6 @@
 $(document).foundation();
 
 $(function() {
-  window.app = new NodeChat.ClientApp();
-  new NodeChat.Controllers.Init( window.app, $('body') );
+  window.chatApp = new NodeChat.ClientApp();
+  new NodeChat.Controllers.Init( window.chatApp, $('body') );
 });
