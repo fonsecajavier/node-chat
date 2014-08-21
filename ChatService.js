@@ -109,13 +109,18 @@ function ChatService(chatClient, redisClient){
       roomName: <room name>
 
     callback
-      <room token> or null
+      a hash with the room information, or null
 
     NOT EXPORTABLE (NOT NEEDED IN THE NET PROTOCOL)
   */
   var findRoomByName = function(data, callback){
-    redisClient.store.get("room:name:" + data.roomName, function(err, reply){
-      callback(reply);
+    redisClient.store.get("room:name:" + data.roomName, function(err, roomToken){
+      if(roomToken){
+        findRoomByToken({roomToken: roomToken}, callback);
+      }
+      else{
+        callback(null);
+      }
     });
   }
 
@@ -124,13 +129,11 @@ function ChatService(chatClient, redisClient){
       roomToken: <room token>
 
     callback
-      <boolean>
-
-    NOT EXPORTABLE (NOT NEEDED IN THE NET PROTOCOL)
+      a hash with the room information, or null
   */
   var findRoomByToken = function(data, callback){
-    redisClient.store.exists("room:" + data.roomToken, function(err, reply){
-      callback(reply);
+    redisClient.store.hgetall(["room:" + data.roomToken], function(err, roomData){
+      callback(roomData);
     });
   }
 
@@ -249,6 +252,18 @@ function ChatService(chatClient, redisClient){
 
   var embedUserToken = function(data){
     data.userToken = chatClient.userToken;
+  }
+
+  /*
+    findRoomByToken
+      roomToken: <room token>
+
+    callback
+      
+      Returns a hash with the room information, null if it doesn't exist
+  */
+  messageProcessor.findRoomByToken = function(data, callback){
+    findRoomByToken(data, callback);
   }
 
   /*
@@ -398,6 +413,7 @@ function ChatService(chatClient, redisClient){
     "motd": "messageOfTheDay",
     "roomsList": "roomsList",
     "usersListByRoom": "usersListByRoom",
+    "findRoomByToken": "findRoomByToken",
     "joinRoomByName": "joinRoomByName",
     "joinRoomByToken": "joinRoomByToken",
     "unjoinRoomByToken": "unjoinRoomByToken",

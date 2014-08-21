@@ -40,6 +40,12 @@ NodeChat.ClientApp = Class.extend({
     });
   },
 
+  findRoomByToken: function(roomToken, callback){
+    this.socket.json.send({type: "findRoomByToken", roomToken: roomToken}, function(roomData){
+      callback(roomData);
+    });
+  },
+
   initializeMediator: function(){
     this.mediator = new Mediator();
   },

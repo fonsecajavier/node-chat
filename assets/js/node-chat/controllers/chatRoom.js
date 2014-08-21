@@ -4,32 +4,36 @@ NodeChat.Controllers.ChatRoom = NodeChat.BaseController.extend({
   $tabsManager: null,
   $tabTitles: null,
   $tabContents: null,
-  roomToken: null,
+  roomData: null,
   
-  init: function(app, $tabsManager, roomToken){
+  init: function(app, $tabsManager, roomToken, context, initCompleted){
     this._super( app );
+    var _this = this;
 
     this.$tabsManager = $tabsManager;
     this.$tabTitles = this.$tabsManager.find("[data-chat-room-tab-titles]");
     this.$tabContents = this.$tabsManager.find("[data-chat-room-tab-contents]");
 
-    this.roomToken = roomToken;
-    this.render();
-    this.bindEvents();
+    this.app.findRoomByToken(roomToken, function(roomData){
+      _this.roomData = _.extend({roomToken: roomToken}, roomData);
+      _this.render();
+      _this.bindEvents();
+      if(_.isFunction(initCompleted)){
+        initCompleted.call(context, _this.roomData);
+      }
+    });
   },
 
   render: function(){
-    var roomData = {roomToken: this.roomToken};
-
-    var renderedTitle = Mustache.render(this.app.templates.chatRoomTabTitle, roomData);
+    var renderedTitle = Mustache.render(this.app.templates.chatRoomTabTitle, this.roomData);
     this.$titleContainer = $(renderedTitle).appendTo(this.$tabTitles);
 
-    var renderedContent = Mustache.render(this.app.templates.chatRoomTabContent, roomData);
+    var renderedContent = Mustache.render(this.app.templates.chatRoomTabContent, this.roomData);
     this.$contentContainer = $(renderedContent).appendTo(this.$tabContents);
   },
 
   bindEvents: function(){
-    this.app.mediator.subscribe("chatRoom:" + this.roomToken, this.processMediatorMessage, {}, this);
+    this.app.mediator.subscribe("chatRoom:" + this.roomData.roomToken, this.processMediatorMessage, {}, this);
     this.bindAfterCloseTab();
   },
 
@@ -38,7 +42,7 @@ NodeChat.Controllers.ChatRoom = NodeChat.BaseController.extend({
 
     // TODO FIXME: Current event should be: 'closed.fndtn.reveal', but foundation has a bug that fires it twice.  See https://github.com/zurb/foundation/issues/5482
     // $(document).on('closed', this.selector, function(){
-    //  _this.app.mediator.remove("chatRoom:" + _this.roomToken, this.processMediatorMessage);
+    //  _this.app.mediator.remove("chatRoom:" + _this.roomData.roomToken, this.processMediatorMessage);
     // });
   },
 
@@ -47,22 +51,13 @@ NodeChat.Controllers.ChatRoom = NodeChat.BaseController.extend({
     //case "bla"
     //  return this.bla();
     default:
-      console.log("ChatRoom " + this.roomToken + " - Don't know how to process message " + data.type);
+      console.log("ChatRoom " + this.roomData.roomToken + " - Don't know how to process message " + data.type);
     }
   },
 
   focus: function(){
-    console.log("setting focus for room " + this.roomToken);
+    console.log("setting focus for room " + this.roomData.roomToken);
     this.$titleContainer.addClass("active");
     this.$contentContainer.addClass("active");
   }
-
-/*
-  bindRoomsListOption: function(){
-    var _this = this;
-    this.$roomsListOption.on("click", function(evt){
-      new NodeChat.Controllers.RoomsList( _this.app ).openModal();
-    });
-  }
-*/
 });

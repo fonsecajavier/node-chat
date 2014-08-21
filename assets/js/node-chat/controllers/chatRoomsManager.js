@@ -25,12 +25,15 @@ NodeChat.Controllers.ChatRoomsManager = NodeChat.BaseController.extend({
       console.log("setting up chat room " + roomToken);
       this.joinedRooms[roomToken] = {
         joinedAt: new Date(),
-        controller: new NodeChat.Controllers.ChatRoom(this.app, this.$container, roomToken)
+        controller: new NodeChat.Controllers.ChatRoom(this.app, this.$container, roomToken, this, this.roomInitCompleted)
       }
-    } 
+    }
+  },
+
+  roomInitCompleted: function(roomData){
     this.unFocusAllTabs();
-    console.log("focusing chat room " + roomToken);
-    this.joinedRooms[roomToken].controller.focus();
+    console.log("focusing chat room " + roomData.roomToken);
+    this.joinedRooms[roomData.roomToken].controller.focus();
   },
 
   unFocusAllTabs: function(){
@@ -38,12 +41,4 @@ NodeChat.Controllers.ChatRoomsManager = NodeChat.BaseController.extend({
     this.$container.find("[data-chat-room-tab-contents]").find("[data-tab-content]").removeClass("active");
   }
 
-/*
-  bindRoomsListOption: function(){
-    var _this = this;
-    this.$roomsListOption.on("click", function(evt){
-      new NodeChat.Controllers.RoomsList( _this.app ).openModal();
-    });
-  }
-*/
 });
