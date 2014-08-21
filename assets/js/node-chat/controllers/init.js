@@ -36,11 +36,11 @@ NodeChat.Controllers.Init = NodeChat.BaseController.extend({
   },
 
   proceedConnecting: function(data){
-    this.app.connect(data, this, function(){
-      // we have recovered our 'this' context for the callback function
-      this.app.getMessageOfTheDay(function(message){
-        new NodeChat.Controllers.MessageOfTheDay( this.app, message ).openModal();
+    var _this = this;
+    this.app.connect(data, function(){
+      _this.app.getMessageOfTheDay(function(message){
+        new NodeChat.Controllers.MessageOfTheDay( _this.app, message ).openModal();
       });
-    });
+    }.bind(this));
   }
 });

@@ -23,7 +23,7 @@ NodeChat.Controllers.RoomsList = NodeChat.ModalController.extend({
     this.app.getRoomsList(function(roomsListReply){
       if(roomsListReply.roomsList.length > 0){
         _this.jsListId = "roomsList-" + _this.id;
-        var renderedList = Mustache.render(this.app.templates.roomsListData, _.extend({jsListId: _this.jsListId}, roomsListReply));
+        var renderedList = Mustache.render(_this.app.templates.roomsListData, _.extend({jsListId: _this.jsListId}, roomsListReply));
         _this.$modal.find("[data-rooms-list]").html(renderedList);
 
         var opts = {valueNames: ["name", "topic"]};

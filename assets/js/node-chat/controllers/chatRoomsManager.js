@@ -25,7 +25,7 @@ NodeChat.Controllers.ChatRoomsManager = NodeChat.BaseController.extend({
       console.log("setting up chat room " + roomToken);
       this.joinedRooms[roomToken] = {
         joinedAt: new Date(),
-        controller: new NodeChat.Controllers.ChatRoom(this.app, this.$container, roomToken, this, this.roomInitCompleted)
+        controller: new NodeChat.Controllers.ChatRoom(this.app, this.$container, roomToken, this.roomInitCompleted.bind(this))
       }
     }
   },

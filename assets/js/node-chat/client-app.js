@@ -7,7 +7,7 @@ NodeChat.ClientApp = Class.extend({
     this.initializeMediator();
   },
 
-  connect: function(data, context, callback){
+  connect: function(data, callback){
     var _this = this;
 
     this.handshakeData = data;
@@ -19,7 +19,7 @@ NodeChat.ClientApp = Class.extend({
     this.socket.on('connect', function() {
       console.log("Connected");
       _this.mediator.publish("clientConnected");
-      callback.call(context);
+      callback();
     });
 
     this.socket.on("message", function(message) {

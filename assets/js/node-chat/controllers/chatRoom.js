@@ -6,7 +6,7 @@ NodeChat.Controllers.ChatRoom = NodeChat.BaseController.extend({
   $tabContents: null,
   roomData: null,
   
-  init: function(app, $tabsManager, roomToken, context, initCompleted){
+  init: function(app, $tabsManager, roomToken, initCompleted){
     this._super( app );
     var _this = this;
 
@@ -19,7 +19,7 @@ NodeChat.Controllers.ChatRoom = NodeChat.BaseController.extend({
       _this.render();
       _this.bindEvents();
       if(_.isFunction(initCompleted)){
-        initCompleted.call(context, _this.roomData);
+        initCompleted(_this.roomData);
       }
     });
   },
