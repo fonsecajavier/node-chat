@@ -67,10 +67,10 @@ NodeChat.Controllers.Modals.RoomsList = NodeChat.Controllers.Modals.Base.extend(
       var $selectedItem = _this.$modal.find("[data-list]").find("li[data-selected]");
       if($selectedItem.length > 0){
         _this.app.joinRoomByToken($selectedItem.attr("data-room-token"));
+        _this.closeModal();
       } else {
         _this.showAlert("Please select a channel", "warning");        
       }
-      _this.closeModal();
       return false;
     });
   },

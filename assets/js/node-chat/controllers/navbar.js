@@ -1,4 +1,4 @@
-NodeChat.Controllers.NavBar = NodeChat.Controllers.Base.extend({
+NodeChat.Controllers.Navbar = NodeChat.Controllers.Base.extend({
   $container: null,
   $roomsListOption: null,
 
@@ -9,11 +9,17 @@ NodeChat.Controllers.NavBar = NodeChat.Controllers.Base.extend({
   },
 
   render: function(){
-    var rendered = Mustache.render(this.app.templates.navBar, {})
+    var rendered = Mustache.render(this.app.templates.navbar, {})
 
     this.$container = $(rendered).prependTo(this.app.$container);
 
     this.$roomsListOption = this.$container.find("[data-rooms-list-option]");
+  },
+
+  setNickname: function(nickname){
+    var nicknameLi = this.$container.find("[data-nickname]");
+    nicknameLi.addClass("active");
+    nicknameLi.find("a").text("Connected as " + nickname);
   },
 
   bindEvents: function(){
