@@ -1,4 +1,4 @@
-NodeChat.Controllers.MessageOfTheDay = NodeChat.ModalController.extend({
+NodeChat.Controllers.Modals.MessageOfTheDay = NodeChat.Controllers.Modals.Base.extend({
   selector: "[data-motd]",
   $closeModal: null,
   messageOfTheDay: null,

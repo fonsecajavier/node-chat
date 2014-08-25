@@ -1,11 +1,14 @@
-@import "foundation_overrides";
 @import "roomsList";
 
 body {
-  color: red;
-  h1 {
-    color: green;
-  }
+}
+
+.main-container {
+   /* These three are just basically trial and error :( */
+  position: fixed;
+  padding-bottom: 100px;
+  width: 100%;
+  height: 100%;
 }
 
 .nickname-modal{
@@ -27,6 +30,84 @@ body {
     }
     li[data-selected] {
       background-color: #D5D5D5;
+    }
+  }
+}
+
+.chat-room-tabs-manager{
+  height: 100%;
+}
+.tabs-content {
+  height: 100%;
+
+  .chat-content{
+    height: 100%;
+    padding: 0; /* overrides Foundations .tabs-content .content */
+    .row.messages-and-users{
+      height: 100%;
+      padding-bottom: 75px;
+      .room-messages-container{
+        &> .row .columns{
+          border-width: 1px 0px 0px 1px;
+          border-style: solid;
+          border-color: #DDDDDD;          
+          padding: 8px;
+        }
+        .user-message{
+          .nickname {
+            text-align: right;
+          }
+        }
+        .user-joined{
+          .message {
+            font-weight: bold;
+            color: green;
+          }
+        }
+        .user-left{
+          .message {
+            font-weight: bold;
+            color: red;
+          }
+        }
+        .global{
+          .message {
+            font-weight: bold;
+            font-style: italic;
+          }
+        }
+        .topic-changed{
+          .message {
+            font-weight: bold;
+            font-style: italic;
+          }
+        }
+      }
+    }
+    .row.form{
+      margin-top: -60px;
+    }
+    .input-msg{
+      width: 100%;
+      margin-top: 20px;
+      margin-left: 10px;
+      font-size: 16px;
+    }
+    .btn-send{
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    .room-messages-container{
+      background-color: #FFFFFF;
+      height: 100%;
+      overflow-y: scroll;
+    }
+    .room-users-container{
+      background-color: #DDDDDD;
+      height: 100%;
+      overflow: scroll;
+      white-space: nowrap;
     }
   }
 }

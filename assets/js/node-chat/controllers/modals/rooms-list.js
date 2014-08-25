@@ -1,4 +1,4 @@
-NodeChat.Controllers.RoomsList = NodeChat.ModalController.extend({
+NodeChat.Controllers.Modals.RoomsList = NodeChat.Controllers.Modals.Base.extend({
   selector: "[data-rooms-list-modal]",
   jsListId: null,
   $joinRoomButton: null,
@@ -70,6 +70,7 @@ NodeChat.Controllers.RoomsList = NodeChat.ModalController.extend({
       } else {
         _this.showAlert("Please select a channel", "warning");        
       }
+      _this.closeModal();
       return false;
     });
   },

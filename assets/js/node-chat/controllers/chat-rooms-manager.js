@@ -1,4 +1,4 @@
-NodeChat.Controllers.ChatRoomsManager = NodeChat.BaseController.extend({
+NodeChat.Controllers.ChatRoomsManager = NodeChat.Controllers.Base.extend({
   $container: null,
   joinedRooms: {},
   

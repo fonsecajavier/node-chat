@@ -1,4 +1,4 @@
-NodeChat.BaseController = Class.extend({
+NodeChat.Controllers.Base = Class.extend({
   app: null,
   id: null,
 

@@ -1,4 +1,4 @@
-NodeChat.Controllers.############### = NodeChat.BaseController.extend({
+NodeChat.Controllers.############### = NodeChat.Controllers.Base.extend({
   init: function(app){
     this._super( app );
     this.render();

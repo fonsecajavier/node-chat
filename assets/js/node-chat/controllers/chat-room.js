@@ -1,4 +1,4 @@
-NodeChat.Controllers.ChatRoom = NodeChat.BaseController.extend({
+NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
   $titleContainer: null,
   $contentContainer: null,
   $tabsManager: null,
@@ -48,8 +48,20 @@ NodeChat.Controllers.ChatRoom = NodeChat.BaseController.extend({
 
   processMediatorMessage: function(data){
     switch(data.type){
-    //case "bla"
-    //  return this.bla();
+      case "userMessage":
+      case "userJoined":
+      case "userLeft":
+      case "topicChanged":
+      case "global":
+        var messageKlass = _.capitalizeFirstLetter(data.type);
+
+        new NodeChat.Controllers.ChatMessages[messageKlass](
+          this.app,
+          this.$contentContainer.find("[data-room-messages-container]"),
+          "chatRoomMessage" + messageKlass,
+          data
+        );
+        break;
     default:
       console.log("ChatRoom " + this.roomData.roomToken + " - Don't know how to process message " + data.type);
     }

@@ -1,4 +1,4 @@
-NodeChat.Controllers.NavBar = NodeChat.BaseController.extend({
+NodeChat.Controllers.NavBar = NodeChat.Controllers.Base.extend({
   $container: null,
   $roomsListOption: null,
 
@@ -23,7 +23,7 @@ NodeChat.Controllers.NavBar = NodeChat.BaseController.extend({
   bindRoomsListOption: function(){
     var _this = this;
     this.$roomsListOption.on("click", function(evt){
-      new NodeChat.Controllers.RoomsList( _this.app ).openModal();
+      new NodeChat.Controllers.Modals.RoomsList( _this.app ).openModal();
     });
   }
 });

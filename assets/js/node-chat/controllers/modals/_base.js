@@ -1,4 +1,4 @@
-NodeChat.ModalController = NodeChat.BaseController.extend({
+NodeChat.Controllers.Modals.Base = NodeChat.Controllers.Base.extend({
   $modal: null,
   selector: null,
 

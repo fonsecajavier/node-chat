@@ -1,4 +1,4 @@
-NodeChat.Controllers.NicknamePrompt = NodeChat.ModalController.extend({
+NodeChat.Controllers.Modals.NicknamePrompt = NodeChat.Controllers.Modals.Base.extend({
   selector: "[data-nickname-prompt]",
 
   init: function(app){

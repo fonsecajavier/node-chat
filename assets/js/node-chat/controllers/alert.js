@@ -1,4 +1,4 @@
-NodeChat.Controllers.Alert = NodeChat.BaseController.extend({
+NodeChat.Controllers.Alert = NodeChat.Controllers.Base.extend({
   $container: null,
 
   init: function(app, options){

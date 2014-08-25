@@ -1,4 +1,4 @@
-NodeChat.Controllers.Init = NodeChat.BaseController.extend({
+NodeChat.Controllers.Init = NodeChat.Controllers.Base.extend({
   app: null,
 
   init: function( app, $container ){
@@ -32,14 +32,14 @@ NodeChat.Controllers.Init = NodeChat.BaseController.extend({
   },
 
   showNicknamePrompt: function(){
-    new NodeChat.Controllers.NicknamePrompt( this.app ).openModal();
+    new NodeChat.Controllers.Modals.NicknamePrompt( this.app ).openModal();
   },
 
   proceedConnecting: function(data){
     var _this = this;
     this.app.connect(data, function(){
       _this.app.getMessageOfTheDay(function(message){
-        new NodeChat.Controllers.MessageOfTheDay( _this.app, message ).openModal();
+        new NodeChat.Controllers.Modals.MessageOfTheDay( _this.app, message ).openModal();
       });
     }.bind(this));
   }
