@@ -6,6 +6,7 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
   $tabContents: null,
   $messagesContainer: null,
   roomData: null,
+  newMessages: 0,
   
   init: function(app, $tabsManager, roomToken, initCompleted){
     this._super( app );
@@ -45,7 +46,7 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
     var _this = this;
     this.$messagesContainer.on('scroll', function(evt){
       if(_this.isScrollingToTheBottom()){
-        _this.publishScrolledToTheBottom();
+        _this.clearRoomMsgCount();
       }
     });
   },
@@ -57,10 +58,6 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
     // $(document).on('closed', this.selector, function(){
     //  _this.app.mediator.remove("chatRoom:" + _this.roomData.roomToken, this.processMediatorMessage);
     // });
-  },
-
-  publishScrolledToTheBottom: function(){
-    this.app.mediator.publish("chatRoom:scrolledToTheBottom", this.roomData.roomToken);
   },
 
   processMediatorMessage: function(data){
@@ -82,7 +79,8 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
 
         if(wasInTheBottom){
           this.scrollToTheBottom();
-          this.publishScrolledToTheBottom();
+        } else {
+          this.countMessage();
         }
         break;
     default:
@@ -90,8 +88,24 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
     }
   },
 
-  focus: function(){
-    console.log("setting focus for room " + this.roomData.roomToken);
+  countMessage: function(){
+    this.newMessages += 1;
+    this.refreshRoomNewMessagesDisplay();
+    this.$tabTitleContainer.addClass("withNewMessages");
+  },
+
+  clearRoomMsgCount: function(roomToken){
+    this.newMessages = 0;
+    this.refreshRoomNewMessagesDisplay(); // not really needed as it should be made invisible, but just for consistency
+    this.$tabTitleContainer.removeClass("withNewMessages");
+  },
+
+  refreshRoomNewMessagesDisplay: function(){
+    this.$tabTitleContainer.find("[data-new-messages-display]").text("(" + this.newMessages + ")");
+  },
+
+  focusTab: function(){
+    console.log("focusing tab for room " + this.roomData.roomToken);
     this.$tabTitleContainer.addClass("active");
     this.$tabContentContainer.addClass("active");
   },

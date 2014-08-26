@@ -18,8 +18,15 @@ NodeChat.Controllers.ChatRoomsManager = NodeChat.Controllers.Base.extend({
   bindEvents: function(){
     //this.bindRoomsListOption();
     this.app.mediator.subscribe("chatRoom:setup", this.setupChatRoomUI, {}, this);
-    this.app.mediator.subscribe("chatRoom:message", this.countMessage, {}, this);
-    this.app.mediator.subscribe("chatRoom:scrolledToTheBottom", this.clearRoomMsgCount, {}, this);
+    this.bindToggledTabs();
+  },
+
+  bindToggledTabs: function(){
+    var _this = this;
+    this.$container.find("[data-tab]").on('toggled', function (event, tab) {
+      var controller = _this.joinedRooms[tab.attr("data-room-token")].controller;
+      controller.scrollToTheBottom();
+    });
   },
 
   setupChatRoomUI: function(roomToken){
@@ -32,29 +39,11 @@ NodeChat.Controllers.ChatRoomsManager = NodeChat.Controllers.Base.extend({
     }
   },
 
-  countMessage: function(data){
-    var $tabTitle = this.$container.find("[data-tab-title][data-room-token='" + data.roomToken + "']");
-    var msgCount = parseInt($tabTitle.attr("data-new-messages")) + 1;
-    $tabTitle.attr("data-new-messages", msgCount);
-    this.refreshRoomNewMessagesDisplay($tabTitle);
-    $tabTitle.addClass("withNewMessages");
-  },
-
-  clearRoomMsgCount: function(roomToken){
-    var $tabTitle = this.$container.find("[data-tab-title][data-room-token='" + roomToken + "']");
-    $tabTitle.attr("data-new-messages", 0);
-    this.refreshRoomNewMessagesDisplay($tabTitle); // not really needed as it should be made invisible, but just for consistency
-    $tabTitle.removeClass("withNewMessages");
-  },
-
-  refreshRoomNewMessagesDisplay: function($tabTitle){
-    $tabTitle.find("[data-new-messages-display]").text("(" + $tabTitle.attr("data-new-messages") + ")");
-  },
-
   roomInitCompleted: function(roomData){
     this.unFocusAllTabs();
-    console.log("focusing chat room " + roomData.roomToken);
-    this.joinedRooms[roomData.roomToken].controller.focus();
+    var controller = this.joinedRooms[roomData.roomToken].controller;
+    controller.focusTab();
+    controller.scrollToTheBottom();
   },
 
   unFocusAllTabs: function(){
