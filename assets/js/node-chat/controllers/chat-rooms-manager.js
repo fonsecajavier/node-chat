@@ -17,7 +17,9 @@ NodeChat.Controllers.ChatRoomsManager = NodeChat.Controllers.Base.extend({
 
   bindEvents: function(){
     //this.bindRoomsListOption();
-    this.app.mediator.subscribe("setupChatRoomUI", this.setupChatRoomUI, {}, this);
+    this.app.mediator.subscribe("chatRoom:setup", this.setupChatRoomUI, {}, this);
+    this.app.mediator.subscribe("chatRoom:message", this.countMessage, {}, this);
+    this.app.mediator.subscribe("chatRoom:scrolledToTheBottom", this.clearRoomMsgCount, {}, this);
   },
 
   setupChatRoomUI: function(roomToken){
@@ -28,6 +30,25 @@ NodeChat.Controllers.ChatRoomsManager = NodeChat.Controllers.Base.extend({
         controller: new NodeChat.Controllers.ChatRoom(this.app, this.$container, roomToken, this.roomInitCompleted.bind(this))
       }
     }
+  },
+
+  countMessage: function(data){
+    var $tabTitle = this.$container.find("[data-tab-title][data-room-token='" + data.roomToken + "']");
+    var msgCount = parseInt($tabTitle.attr("data-new-messages")) + 1;
+    $tabTitle.attr("data-new-messages", msgCount);
+    this.refreshRoomNewMessagesDisplay($tabTitle);
+    $tabTitle.addClass("withNewMessages");
+  },
+
+  clearRoomMsgCount: function(roomToken){
+    var $tabTitle = this.$container.find("[data-tab-title][data-room-token='" + roomToken + "']");
+    $tabTitle.attr("data-new-messages", 0);
+    this.refreshRoomNewMessagesDisplay($tabTitle); // not really needed as it should be made invisible, but just for consistency
+    $tabTitle.removeClass("withNewMessages");
+  },
+
+  refreshRoomNewMessagesDisplay: function($tabTitle){
+    $tabTitle.find("[data-new-messages-display]").text("(" + $tabTitle.attr("data-new-messages") + ")");
   },
 
   roomInitCompleted: function(roomData){

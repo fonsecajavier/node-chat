@@ -51,7 +51,7 @@ NodeChat.ClientApp = Class.extend({
   },
 
   joinRoomByToken: function(roomToken){
-    this.mediator.publish("setupChatRoomUI", roomToken);
+    this.mediator.publish("chatRoom:setup", roomToken);
   },
 
   // debug tool:

@@ -36,6 +36,17 @@ body {
 
 .chat-room-tabs-manager{
   height: 100%;
+  [data-tab-title]{
+    [data-new-messages-display]{
+      display: none;
+    }
+    &.withNewMessages{
+      font-weight: bold;
+      [data-new-messages-display]{
+        display: initial;
+      }
+    }
+  }
 }
 .tabs-content {
   height: 100%;

@@ -1,7 +1,8 @@
 NodeChat.Controllers.ChatMessages.UserMessage = NodeChat.Controllers.ChatMessages.Base.extend({
 
-  init: function(app, $messagesContainer, templateName, messageObject){
+  init: function(app, templateName, messageObject){
     this._super.apply(this, arguments);
+    this.templateName = "chatRoomMessageUserMessage";
   },
 
   processedMessageObject: function(){
