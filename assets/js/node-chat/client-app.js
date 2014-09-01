@@ -24,6 +24,9 @@ NodeChat.ClientApp = Class.extend({
 
     this.socket.on("message", function(message) {
       console.log("message received from server: " + JSON.stringify(message));
+      if(message.roomToken){
+        _this.mediator.publish("chatRoom:message:" + message.roomToken, message);
+      }
     });
   },
 
@@ -46,12 +49,34 @@ NodeChat.ClientApp = Class.extend({
     });
   },
 
+  getUsersListByRoom: function(roomToken, callback){
+    this.socket.json.send({type: "usersListByRoom", roomToken: roomToken}, function(response){
+      callback(response.usersList);
+    });
+  },
+
+  sendUserMessageToRoom: function(roomToken, message, callback){
+    this.socket.json.send({type: "publishUserMessage", roomToken: roomToken, message: message}, function(response){
+      callback(response);
+    });
+  },
+
   initializeMediator: function(){
     this.mediator = new Mediator();
   },
 
   joinRoomByToken: function(roomToken){
-    this.mediator.publish("chatRoom:setup", roomToken);
+    var _this = this;
+    // TODO: We should verify with the tab manager that user hasn't joined, before sending the command to the server
+    this.socket.json.send({type: "joinRoomByToken", roomToken: roomToken}, function(roomData){
+      _this.mediator.publish("chatRoom:setup", roomToken);
+    });
+  },
+
+  unjoinRoomByToken: function(roomToken){
+    var _this = this;
+    this.socket.json.send({type: "unjoinRoomByToken", roomToken: roomToken}, function(response){
+    });
   },
 
   // debug tool:

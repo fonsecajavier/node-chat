@@ -63,3 +63,7 @@ var httpPort = process.env.PORT || 3000;
 http.listen(httpPort, function(){
   console.log("Listening on *:" + httpPort);
 });
+
+var CleanerService = require("CleanerService");
+var cleanerService = new CleanerService(redisClient);
+cleanerService.run();

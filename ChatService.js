@@ -61,8 +61,10 @@ function ChatService(chatClient, redisClient){
       var users = [];
       async.map(userTokens, function(userToken, callback){
         redisClient.store.hgetall(["user:" + userToken], function(err, user){
-          user.token = userToken
-          callback(err, user);
+          var retUser = {};
+          retUser.token = userToken;
+          retUser.nickname = user.nickname;
+          callback(err, retUser);
         })
       }, function(err, results){
         outerCallback({usersList: results});
@@ -77,7 +79,7 @@ function ChatService(chatClient, redisClient){
 
     callback
       <room token>
-    NOT EXPORTABLE TO ENSURE SECURITY, CLIENT MUST INVOKE joinRoomByName
+    TO ENSURE SECURITY, CLIENT MUST INVOKE joinRoomByName
   */
   var createRoomByName = function(data, callback){
     roomToken = uuid.v4();
@@ -111,7 +113,7 @@ function ChatService(chatClient, redisClient){
     callback
       a hash with the room information, or null
 
-    NOT EXPORTABLE (NOT NEEDED IN THE NET PROTOCOL)
+    NOT DIRECTLY USED IN THE NET PROTOCOL
   */
   var findRoomByName = function(data, callback){
     redisClient.store.get("room:name:" + data.roomName, function(err, roomToken){
@@ -145,7 +147,7 @@ function ChatService(chatClient, redisClient){
     callback
       <boolean>
 
-    NOT EXPORTABLE (NOT NEEDED IN THE NET PROTOCOL)
+    NOT DIRECTLY USED IN THE NET PROTOCOL
   */
   var findUserInRoom = function(data, callback){
     var key = "user:" + data.userToken + ":room:" + data.roomToken;
@@ -165,13 +167,17 @@ function ChatService(chatClient, redisClient){
       A hash with the room token where the user entered
       Or a hash with an error key if user already joined
 
-    NOT EXPORTABLE (NOT NEEDED IN THE NET PROTOCOL)
+    NOT DIRECTLY USED IN THE NET PROTOCOL
   */
   var joinUserToRoom = function(data, callback){
     var _this = this
     findUserInRoom(data, function(presenceExists){
       if(!presenceExists){
         redisClient.store.multi()
+          .hget(
+            "user:" + data.userToken,
+            "nickname"
+          )
           .sadd(
             "user:" + data.userToken + ":rooms",
             data.roomToken
@@ -195,6 +201,9 @@ function ChatService(chatClient, redisClient){
             "joinedAt", Date.now()
           )
           .exec(function (err, replies){
+            data.userNickname = replies[0];
+            publishUserJoinedMessage(data);
+            console.log("TODO: send message to all users notifying this guy joined");
             callback({roomToken: data.roomToken});
           })
       } else {
@@ -214,9 +223,9 @@ function ChatService(chatClient, redisClient){
       A hash with the room token where the user entered
       Or a hash with an error key if user hadn't joined
 
-    NOT EXPORTABLE (NOT NEEDED IN THE NET PROTOCOL)
+    NOT DIRECTLY USED IN THE NET PROTOCOL
   */
-  var unjoinUserFromRoom = function(data, callback){
+  this.unjoinUserFromRoom = function(data, callback){
     findUserInRoom(data, function(presenceExists){
       if(presenceExists){
         redisClient.store.multi()
@@ -242,6 +251,7 @@ function ChatService(chatClient, redisClient){
             "user:" + data.userToken + ":room:" + data.roomToken
           )
           .exec(function (err, replies){
+            publishUserUnjoinedMessage(data);
             callback({status: "OK"});
           })
       } else {
@@ -328,10 +338,11 @@ function ChatService(chatClient, redisClient){
     or if user hadn't joined this room.
   */
   messageProcessor.unjoinRoomByToken = function(data, callback){
+    var _this = this;
     embedUserToken(data);
     findRoomByToken(data, function(roomExists){
       if(roomExists){
-        unjoinUserFromRoom(data, function(reply){
+        _this.unjoinUserFromRoom(data, function(reply){
           callback(reply)
         });
       } else {
@@ -357,6 +368,29 @@ function ChatService(chatClient, redisClient){
         }
       });
     });
+  }
+
+  var publishUserJoinedMessage = function(data){
+    var channel = "room:" + data.roomToken;
+    var payload = JSON.stringify({
+        type: "userJoined",
+        userToken: chatClient.userToken,
+        userNickname: data.userNickname,
+        roomToken: data.roomToken
+      })
+
+    redisClient.pub.publish(channel, payload);
+  }
+
+  var publishUserUnjoinedMessage = function(data){
+    var channel = "room:" + data.roomToken;
+    var payload = JSON.stringify({
+        type: "userUnjoined",
+        userToken: data.userToken || chatClient.userToken,
+        roomToken: data.roomToken
+      })
+
+    redisClient.pub.publish(channel, payload);
   }
 
   /*
@@ -397,8 +431,7 @@ function ChatService(chatClient, redisClient){
         var payload = JSON.stringify({
             type: "userMessage",
             userToken: chatClient.userToken,
-            userNickname: user.nickname,
-            message: data.msg,
+            message: data.message,
             roomToken: data.roomToken
           })
 
@@ -438,16 +471,17 @@ function ChatService(chatClient, redisClient){
     }
   }
 
-  this.cleanupDisconnectedClient = function(nickname, token, callback){
-    // Have to better deal with this:
-    /*
+  this.setDisconnectedClient = function(token, callback){
     redisClient.store.multi()
-      .del("user:" + token)
-      .del("user:nickname:" + nickname)
+      .hmset(
+        "user:" + token,
+        "disconnectedAt", Date.now()
+      )
+      .sadd("disconnectedUsersList", token)
       .exec(function (err, replies){
         callback("OK");
       });
-    */
+    // CleanerService should take care of the rest
   }
 }
 
@@ -458,11 +492,13 @@ ChatService.connectClient = function(redisClient, nickname, token, callback){
     if(reply == token){
       redisClient.store.multi()
         .persist(reservedKey)
+        .del("user:" + token)
         .hmset(
           "user:" + token,
           "nickname", nickname,
           "connectedAt", Date.now()
         )
+        .srem("disconnectedUsersList", token)
         .exec(function (err, replies){
           callback("OK");
         })

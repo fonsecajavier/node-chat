@@ -7,147 +7,22 @@
         <div class="small-10 columns message">Welcome to ABC room.  The topic of this room is &quot;some topic&quot;.  You can change the topic by sending a command /topic &lt;The new topic&gt;</div>
       </div>
 
-      <div class="row user-message" data-userToken="{{userToken}}">
-        <div class="small-2 columns nickname">user</div>
-        <div class="small-10 columns text">msg</div>
-      </div>
-
-      <div class="row user-joined" data-userToken="{{userToken}}">
-        <div class="small-2 columns">&nbsp;</div>
-        <div class="small-10 columns message"><i class="fa fa-long-arrow-right"></i> user has joined</div>
-      </div>
-
-      <div class="row user-left" data-userToken="{{userToken}}">
-        <div class="small-2 columns">&nbsp;</div>
-        <div class="small-10 columns message"><i class="fa fa-long-arrow-left"></i> user has left</div>
-      </div>
-
       <div class="row topic-changed" data-userToken="{{userToken}}">
         <div class="small-2 columns">&nbsp;</div>
         <div class="small-10 columns message">user has changed the topic to &quot;Hello my world, enjoy your day!&quot;</div>
       </div>
 
-
-
-      <div class="row user-message">
-        <div class="small-2 columns nickname">user</div>
-        <div class="small-10 columns text">msg</div>
-      </div>
-      <div class="row user-message">
-        <div class="small-2 columns nickname">user</div>
-        <div class="small-10 columns text">msg</div>
-      </div>
-      <div class="row user-message">
-        <div class="small-2 columns nickname">user</div>
-        <div class="small-10 columns text">msg</div>
-      </div>
-      <div class="row user-message">
-        <div class="small-2 columns nickname">user</div>
-        <div class="small-10 columns text">msg</div>
-      </div>
-      <div class="row user-message">
-        <div class="small-2 columns nickname">user</div>
-        <div class="small-10 columns text">msg</div>
-      </div>
-      <div class="row user-message">
-        <div class="small-2 columns nickname">user</div>
-        <div class="small-10 columns text">msg</div>
-      </div>
-      <div class="row user-message">
-        <div class="small-2 columns nickname">user</div>
-        <div class="small-10 columns text">msg</div>
-      </div>
-      <div class="row user-message">
-        <div class="small-2 columns nickname">user</div>
-        <div class="small-10 columns text">msg</div>
-      </div>
-      <div class="row user-message">
-        <div class="small-2 columns nickname">user</div>
-        <div class="small-10 columns text">msg</div>
-      </div>
-      <div class="row user-message">
-        <div class="small-2 columns nickname">user</div>
-        <div class="small-10 columns text">msg</div>
-      </div>
-      <div class="row user-message">
-        <div class="small-2 columns nickname">user</div>
-        <div class="small-10 columns text">msg</div>
-      </div>
-      <div class="row user-message">
-        <div class="small-2 columns nickname">user</div>
-        <div class="small-10 columns text">msg</div>
-      </div>
-      <div class="row user-message">
-        <div class="small-2 columns nickname">user</div>
-        <div class="small-10 columns text">msg</div>
-      </div>
-      <div class="row user-message">
-        <div class="small-2 columns nickname">user</div>
-        <div class="small-10 columns text">msg</div>
-      </div>
-      <div class="row user-message">
-        <div class="small-2 columns nickname">user</div>
-        <div class="small-10 columns text">msg</div>
-      </div>
-      <div class="row user-message">
-        <div class="small-2 columns nickname">user</div>
-        <div class="small-10 columns text">msg</div>
-      </div>
-      <div class="row user-message">
-        <div class="small-2 columns nickname">user</div>
-        <div class="small-10 columns text">msg</div>
-      </div>
-
     </div>
 
-
-
-    <div class="small-2 columns room-users-container">
-      list of my people here<br />
-      some long long long long long long long name<br/>
-      1<br/>
-      2<br/>
-      3<br/>
-      4<br/>
-      5<br/>
-      6<br/>
-      7<br/>
-      8<br/>
-      9<br/>
-      10<br/>
-      11<br/>
-      12<br/>
-      13<br/>
-      14<br/>
-      15<br/>
-      16<br/>
-      17<br/>
-      18<br/>
-      19<br/>
-      20<br/>
-      21<br/>
-      22<br/>
-      23<br/>
-      24<br/>
-      25<br/>
-      26<br/>
-      27<br/>
-      28<br/>
-      29<br/>
-      30<br/>
-      31<br/>
-      32<br/>
-      33<br/>
-      34<br/>
-      35<br/>
+    <div class="small-2 columns room-users-container" data-room-users-container>
     </div>
   <div class="row fullWidth form">
-    <form class="form-msg">
+    <form class="form-msg" data-form-message>
       <div class="small-11 columns">
-        <input class="input-msg" placeholder="Type your message or command here..." />
+        <input class="input-msg" placeholder="Type your message or command here..." data-input />
       </div>
       <div class="small-1 columns">
-        <button class="btn-send">Send</button>
+        <button class="btn-send" data-send>Send</button>
       </div>
     </form>
   </div>

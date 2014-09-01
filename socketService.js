@@ -34,7 +34,7 @@ module.exports = function(http){
     client.on("disconnect", function(){
       // NOTE: we might now want to delete the user immediately, but wait a reasonable
       // amount of time before declaring him dead, giving them a chance to reconnect.
-      chatService.cleanupDisconnectedClient(nickname, token, function(status){
+      chatService.setDisconnectedClient(token, function(status){
         if(status == "OK"){
           console.log("client disconnected: " + nickname + "#" + token);
         }

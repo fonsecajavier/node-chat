@@ -5,9 +5,11 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
   $tabTitles: null,
   $tabContents: null,
   $messagesContainer: null,
+  $usersContainer: null,
+  $formMessage: null,
   roomData: null,
   newMessages: 0,
-  
+
   init: function(app, $tabsManager, roomToken, initCompleted){
     this._super( app );
     var _this = this;
@@ -18,11 +20,14 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
 
     this.app.findRoomByToken(roomToken, function(roomData){
       _this.roomData = _.extend({roomToken: roomToken}, roomData);
-      _this.render();
-      _this.bindEvents();
-      if(_.isFunction(initCompleted)){
-        initCompleted(_this.roomData);
-      }
+      _this.app.getUsersListByRoom(roomToken, function(usersList){
+        _this.roomData.usersList = usersList;
+        _this.render();
+        _this.bindEvents();
+        if(_.isFunction(initCompleted)){
+          initCompleted(_this.roomData);
+        }        
+      })
     });
   },
 
@@ -34,12 +39,35 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
     this.$tabContentContainer = $(renderedContent).appendTo(this.$tabContents);
 
     this.$messagesContainer = this.$tabContentContainer.find("[data-room-messages-container]");
+
+    this.$usersContainer =  this.$tabContentContainer.find("[data-room-users-container]");
+
+    this.$formMessage = this.$tabContentContainer.find("[data-form-message]");
+
+    this.$messageInput = this.$formMessage.find("[data-input]");
+    this.$messageSend =  this.$formMessage.find("[data-send]");
+
+    this.renderUsersList();
+  },
+
+  renderUsersList: function(){
+    var _this = this;
+
+    var sortedUsers = _.sortBy(this.roomData.usersList, function(user){
+      return user.nickname.toLowerCase();
+    });
+
+    _.each(sortedUsers, function(user){
+      var renderedUser = Mustache.render(_this.app.templates.chatRoomUser, user);
+      $(renderedUser).appendTo(_this.$usersContainer);
+    });
   },
 
   bindEvents: function(){
     this.app.mediator.subscribe("chatRoom:message:" + this.roomData.roomToken, this.processMediatorMessage, {}, this);
-    this.bindAfterCloseTab();
     this.bindMessagesScrolled();
+    this.bindSendMessageButton();
+    this.bindCloseTabButton();
   },
 
   bindMessagesScrolled: function(){
@@ -51,40 +79,112 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
     });
   },
 
-  bindAfterCloseTab: function(){
+  bindCloseTabButton: function(){
+    var _this = this;
+    this.$tabTitleContainer.find("[data-close-tab]").on("click", function(event){
+      _this.app.mediator.publish("chatRoom:remove", _this.roomData.roomToken); // we'll delegate it to the chatRoom tab manager
+    });
+  },
+
+  removeFromDOM: function(){
+    this.app.mediator.remove("chatRoom:message:" + this.roomData.roomToken, this.processMediatorMessage);
+    this.$tabTitleContainer.remove();
+    this.$tabContentContainer.remove();
+  },
+
+  bindSendMessageButton: function(){
     var _this = this;
 
-    // TODO FIXME: Current event should be: 'closed.fndtn.reveal', but foundation has a bug that fires it twice.  See https://github.com/zurb/foundation/issues/5482
-    // $(document).on('closed', this.selector, function(){
-    //  _this.app.mediator.remove("chatRoom:" + _this.roomData.roomToken, this.processMediatorMessage);
-    // });
+    this.$messageInput.keydown(function(e){
+      var keyCode = e.keyCode || e.which;
+
+      if (keyCode == 13) {
+        _this.$messageSend.trigger("click");
+        return false;
+      }
+    });
+
+    this.$messageSend.on("click", function(evt){
+      var msg = _this.$messageInput.val();
+      if(!msg.trim()){
+        return false;
+      }
+
+      _this.app.sendUserMessageToRoom(_this.roomData.roomToken, msg, function(response){
+        if(response.status != "OK"){
+          console.log("Error sending message from room " + _this.roomData.roomToken);
+        }
+      }.bind(_this));
+
+      _this.$messageInput.val("");
+      return false;
+    });
+  },
+
+  findUserInList: function(token){
+    return _.find(this.roomData.usersList, function(user){ return(user.token == token) });
+  },
+
+  addUserToList: function(user){
+    this.roomData.usersList.push(user);
+
+    var renderedUser = Mustache.render(this.app.templates.chatRoomUser, user);
+    $(renderedUser).appendTo(this.$usersContainer);
+  },
+
+  removeUserFromList: function(userToken){
+    this.roomData.usersList == _.filter(this.roomData.usersList, function(user){ return user.token != userToken });
+
+    this.$usersContainer.find("[data-user-token='" + userToken+ "']").remove();
   },
 
   processMediatorMessage: function(data){
-    switch(data.type){
-      case "userMessage":
-      case "userJoined":
-      case "userLeft":
-      case "topicChanged":
-      case "global":
-        var messageKlass = _.capitalizeFirstLetter(data.type);
+    validMessages = ["userMessage", "userUnjoined", "userJoined", "topicChanged"];
 
-        var msgController = new NodeChat.Controllers.ChatMessages[messageKlass](
-          this.app,
-          data
-        );
+    console.log("Received message for chatRoom " + this.roomData.roomToken + " - " + JSON.stringify(data));
 
-        var wasInTheBottom = this.isScrollingToTheBottom();
-        $(msgController.generateHTML()).appendTo(this.$messagesContainer);    
+    if(_.indexOf(validMessages, data.type) == -1){
+      console.log("ChatRoom " + this.roomData.roomToken + " - Don't know how to process message " + data.type); 
+      return;
+    }
 
-        if(wasInTheBottom){
-          this.scrollToTheBottom();
-        } else {
-          this.countMessage();
-        }
-        break;
-    default:
-      console.log("ChatRoom " + this.roomData.roomToken + " - Don't know how to process message " + data.type);
+    if(_.indexOf(["userMessage", "userUnjoined"], data.type) != -1){
+      var user = null;
+      user = this.findUserInList(data.userToken);
+
+      // adds the nickname to the hash so that it can also be rendered:
+      data.userNickname = user.nickname;
+    }
+
+    if(data.type == "userJoined"){
+      this.addUserToList({
+        token: data.userToken,
+        nickname: data.userNickname
+      })
+    }
+
+    if(data.type == "userUnjoined"){
+      this.removeUserFromList(data.userToken);
+    }
+
+    this.renderMessage(data);
+  },
+
+  renderMessage: function(data){
+    var messageKlass = _.capitalizeFirstLetter(data.type);
+
+    var msgController = new NodeChat.Controllers.ChatMessages[messageKlass](
+      this.app,
+      data
+    );
+
+    var wasInTheBottom = this.isScrollingToTheBottom();
+    $(msgController.generateHTML()).appendTo(this.$messagesContainer);    
+
+    if(wasInTheBottom){
+      this.scrollToTheBottom();
+    } else {
+      this.countMessage();
     }
   },
 
@@ -108,6 +208,13 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
     console.log("focusing tab for room " + this.roomData.roomToken);
     this.$tabTitleContainer.addClass("active");
     this.$tabContentContainer.addClass("active");
+
+    this.scrollToTheBottom();
+    this.focusMessageInput();
+  },
+
+  focusMessageInput: function(){
+    this.$formMessage.find("[data-input]").focus();
   },
 
   isScrollingToTheBottom: function(){
