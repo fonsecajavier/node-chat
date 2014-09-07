@@ -7,7 +7,6 @@ NodeChat.Controllers.Modals.RoomsList = NodeChat.Controllers.Modals.Base.extend(
   init: function(app){
     this._super( app );
     this.render();
-    this.bindEvents();
     this.renderRoomsList();
   },
 
@@ -33,16 +32,12 @@ NodeChat.Controllers.Modals.RoomsList = NodeChat.Controllers.Modals.Base.extend(
         _this.$joinRoomButton = _this.$modal.find("[data-join-room-button]");
         _this.bindJoinRoomButton();
       } else {
-        var renderedContent = Mustache.render(this.app.templates.roomsListEmpty, {});
+        var renderedContent = Mustache.render(_this.app.templates.roomsListEmpty, {});
         _this.$modal.find("[data-rooms-list]").html(renderedContent);
 
         _this.bindCreateFirstChannel();
       };
     })
-  },
-
-  bindEvents: function(){
-    
   },
 
   bindListItem: function(){
@@ -55,10 +50,10 @@ NodeChat.Controllers.Modals.RoomsList = NodeChat.Controllers.Modals.Base.extend(
   },
 
   bindCreateFirstChannel: function(){
+    var _this = this;
     this.$modal.find("[data-create-first-channel]").on("click", function(evt){
-      console.log("show the other popup");
+      new NodeChat.Controllers.Modals.RoomJoin( _this.app ).openModal();
     });
-    console.log("pending bindCreateFirstChannel")
   },
 
   bindJoinRoomButton: function(){

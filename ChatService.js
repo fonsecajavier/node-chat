@@ -97,7 +97,7 @@ function ChatService(chatClient, redisClient){
         "roomToken", roomToken
       )
       .set(
-        "room:name:" + data.roomName,
+        "room:name:" + data.roomName.toLowerCase(),
         roomToken
       )
       .exec(function (err, replies){
@@ -111,18 +111,13 @@ function ChatService(chatClient, redisClient){
       roomName: <room name>
 
     callback
-      a hash with the room information, or null
+      the room token if found, or null if not found
 
     NOT DIRECTLY USED IN THE NET PROTOCOL
   */
   var findRoomByName = function(data, callback){
-    redisClient.store.get("room:name:" + data.roomName, function(err, roomToken){
-      if(roomToken){
-        findRoomByToken({roomToken: roomToken}, callback);
-      }
-      else{
-        callback(null);
-      }
+    redisClient.store.get("room:name:" + data.roomName.toLowerCase(), function(err, roomToken){
+      callback(roomToken);
     });
   }
 
@@ -165,7 +160,7 @@ function ChatService(chatClient, redisClient){
 
     callback
       A hash with the room token where the user entered
-      Or a hash with an error key if user already joined
+      Or a hash with an error key and the room token if user already joined
 
     NOT DIRECTLY USED IN THE NET PROTOCOL
   */
@@ -207,7 +202,7 @@ function ChatService(chatClient, redisClient){
             callback({roomToken: data.roomToken});
           })
       } else {
-        callback({error: "User already joined this room"});
+        callback({error: "User already joined this room", roomToken: data.roomToken});
       }
     });
   }

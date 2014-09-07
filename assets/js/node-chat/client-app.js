@@ -7,6 +7,10 @@ NodeChat.ClientApp = Class.extend({
     this.initializeMediator();
   },
 
+  initializeMediator: function(){
+    this.mediator = new Mediator();
+  },
+
   connect: function(data, callback){
     var _this = this;
 
@@ -61,15 +65,18 @@ NodeChat.ClientApp = Class.extend({
     });
   },
 
-  initializeMediator: function(){
-    this.mediator = new Mediator();
-  },
-
   joinRoomByToken: function(roomToken){
     var _this = this;
     // TODO: We should verify with the tab manager that user hasn't joined, before sending the command to the server
     this.socket.json.send({type: "joinRoomByToken", roomToken: roomToken}, function(roomData){
       _this.mediator.publish("chatRoom:setup", roomToken);
+    });
+  },
+
+  joinRoomByName: function(roomName){
+    var _this = this;
+    this.socket.json.send({type: "joinRoomByName", roomName: roomName}, function(roomData){
+      _this.mediator.publish("chatRoom:setup", roomData.roomToken);
     });
   },
 

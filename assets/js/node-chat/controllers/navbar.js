@@ -14,6 +14,7 @@ NodeChat.Controllers.Navbar = NodeChat.Controllers.Base.extend({
     this.$container = $(rendered).prependTo(this.app.$container);
 
     this.$roomsListOption = this.$container.find("[data-rooms-list-option]");
+    this.$roomJoinOption = this.$container.find("[data-room-join-option]");
   },
 
   setNickname: function(nickname){
@@ -24,6 +25,7 @@ NodeChat.Controllers.Navbar = NodeChat.Controllers.Base.extend({
 
   bindEvents: function(){
     this.bindRoomsListOption();
+    this.bindRoomJoinOption();
   },
 
   bindRoomsListOption: function(){
@@ -31,5 +33,13 @@ NodeChat.Controllers.Navbar = NodeChat.Controllers.Base.extend({
     this.$roomsListOption.on("click", function(evt){
       new NodeChat.Controllers.Modals.RoomsList( _this.app ).openModal();
     });
+  },
+
+  bindRoomJoinOption: function(){
+    var _this = this;
+    this.$roomJoinOption.on("click", function(evt){
+      new NodeChat.Controllers.Modals.RoomJoin( _this.app ).openModal();
+    });
   }
+
 });
