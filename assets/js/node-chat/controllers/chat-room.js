@@ -22,6 +22,9 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
       _this.roomData = _.extend({roomToken: roomToken}, roomData);
       _this.app.getUsersListByRoom(roomToken, function(usersList){
         _this.roomData.usersList = usersList;
+        _this.roomData.usersList.forEach(function(user){
+          user.fontColor = _this.generateRandomFontColor();
+        });
         _this.render();
         _this.bindEvents();
         if(_.isFunction(initCompleted)){
@@ -183,12 +186,14 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
 
       // adds the nickname to the hash so that it can also be rendered:
       data.userNickname = user.nickname;
+      data.userFontColor = user.fontColor;
     }
 
     if(data.type == "userJoined"){
       this.addUserToList({
         token: data.userToken,
-        nickname: data.userNickname
+        nickname: data.userNickname,
+        fontColor: this.generateRandomFontColor()
       })
     }
 
@@ -258,5 +263,12 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
   scrollToTheBottom: function(){
     var elem = this.$messagesContainer[0]; // shortcut
     elem.scrollTop = elem.scrollHeight;
+  },
+
+  generateRandomFontColor: function(){
+    var r = parseInt(Math.random()*128);
+    var g = parseInt(Math.random()*128);
+    var b = parseInt(Math.random()*128);
+    return "rgb(" + r + "," + g + ","  + b + ")" ;
   }
 });

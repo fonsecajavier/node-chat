@@ -9,7 +9,8 @@ NodeChat.Controllers.ChatMessages.UserMessage = NodeChat.Controllers.ChatMessage
     return({
       userToken: this.messageObject.userToken,
       userNickname: this.messageObject.userNickname,
-      message: this.messageObject.message
+      userFontColor: this.messageObject.userFontColor,
+      message: this.messageObject.message,
     });
   }
 
