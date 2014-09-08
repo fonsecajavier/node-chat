@@ -1,4 +1,4 @@
-var ChatService = require('ChatService');
+var ChatService = require('./ChatService');
 var async = require('async');
 
 function CleanerService(redisClient){

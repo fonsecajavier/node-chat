@@ -1,5 +1,5 @@
-var redisClient = require('redisClient');
-var ChatService = require('ChatService');
+var redisClient = require('./redisClient');
+var ChatService = require('./ChatService');
 
 module.exports = function(http){
   var io = require('socket.io')(http);

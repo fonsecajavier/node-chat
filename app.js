@@ -52,11 +52,11 @@ app.use('/', defaultRoutes);
 var connectRoutes = require('./routes/connect.js');
 app.use('/connect', connectRoutes);
 
-var SocketService = require('socketService');
+var SocketService = require('./socketService');
 var socketService = new SocketService(http);
 
-var redisClient = require('redisClient');
-var ChatService = require('ChatService');
+var redisClient = require('./redisClient');
+var ChatService = require('./ChatService');
 ChatService.subscribeExistingChannels(redisClient);
 
 var httpPort = process.env.PORT || 3000;
@@ -64,6 +64,6 @@ http.listen(httpPort, function(){
   console.log("Listening on *:" + httpPort);
 });
 
-var CleanerService = require("CleanerService");
+var CleanerService = require("./CleanerService");
 var cleanerService = new CleanerService(redisClient);
 cleanerService.run();
