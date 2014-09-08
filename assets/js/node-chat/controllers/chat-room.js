@@ -110,15 +110,44 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
         return false;
       }
 
-      _this.app.sendUserMessageToRoom(_this.roomData.roomToken, msg, function(response){
-        if(response.status != "OK"){
-          console.log("Error sending message from room " + _this.roomData.roomToken);
-        }
-      }.bind(_this));
+      if(!_this.processCommand(msg)){
+        _this.app.sendUserMessageToRoom(_this.roomData.roomToken, msg, function(response){
+          if(response.status != "OK"){
+            console.log("Error sending message from room " + _this.roomData.roomToken);
+          }
+        }.bind(_this));
+      }
 
       _this.$messageInput.val("");
       return false;
     });
+  },
+
+  processCommand: function(msg){
+    var regExp = /\/(\w+)(\s(.+))?/; // commands should start with slash, provide the name of the command in a single word, then the rest as arguments
+
+    var parsedArr = regExp.exec(msg);
+
+    if(parsedArr){
+      var command = parsedArr[1].toLowerCase();
+      var allArgs = parsedArr[3];
+      switch(command){
+        case 'topic':
+          if(allArgs){
+            // with args: set the topic
+            this.app.changeRoomTopic(this.roomData.roomToken, allArgs, function(){});
+          }
+          else {
+            // no args: show the topic
+            this.processMediatorMessage({type: "global", message: "The topic for this room is '" + this.roomData.topic + "'"});
+          }
+          break;
+        default:
+          console.log("Invalid command '" + command + "' received from room " + this.roomData.roomToken);
+      }
+    }
+
+    return parsedArr;
   },
 
   findUserInList: function(token){
@@ -139,7 +168,7 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
   },
 
   processMediatorMessage: function(data){
-    validMessages = ["userMessage", "userUnjoined", "userJoined", "topicChanged"];
+    validMessages = ["userMessage", "userUnjoined", "userJoined", "topicChanged", "global"];
 
     console.log("Received message for chatRoom " + this.roomData.roomToken + " - " + JSON.stringify(data));
 
@@ -148,7 +177,7 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
       return;
     }
 
-    if(_.indexOf(["userMessage", "userUnjoined"], data.type) != -1){
+    if(_.indexOf(["userMessage", "userUnjoined", "topicChanged"], data.type) != -1){
       var user = null;
       user = this.findUserInList(data.userToken);
 
@@ -165,6 +194,10 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
 
     if(data.type == "userUnjoined"){
       this.removeUserFromList(data.userToken);
+    }
+
+    if(data.type == "topicChanged"){
+      this.roomData.topic = data.topic;
     }
 
     this.renderMessage(data);

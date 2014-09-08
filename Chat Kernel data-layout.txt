@@ -9,7 +9,7 @@ Chat Kernel data-layout
 "usersList" SET
   <user_token>
 
-"user:name:<nickname>" STRING
+"user:nickname:<nickname>" STRING    # user_name must be lower case!!!
   <user_token>
 
 "user:<user_token>:rooms" SET
@@ -29,7 +29,7 @@ Chat Kernel data-layout
 "roomsListRanked" SORTED SET
   <room_token> SCORE: <user count>
 
-"room:name:<room_name>" STRING
+"room:name:<room_name>" STRING   # room_name must be lower case!!!
   <room_token>
 
 "room:<room_token>:users" SET

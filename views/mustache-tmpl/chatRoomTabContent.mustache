@@ -4,18 +4,21 @@
 
       <div class="row global">
         <div class="small-2 columns">&nbsp;</div>
-        <div class="small-10 columns message">Welcome to ABC room.  The topic of this room is &quot;some topic&quot;.  You can change the topic by sending a command /topic &lt;The new topic&gt;</div>
-      </div>
-
-      <div class="row topic-changed" data-userToken="{{userToken}}">
-        <div class="small-2 columns">&nbsp;</div>
-        <div class="small-10 columns message">user has changed the topic to &quot;Hello my world, enjoy your day!&quot;</div>
+        <div class="small-10 columns message">Welcome to {{name}} room.
+        {{#topic}}
+          The topic of this room is &quot;{{topic}}&quot;.
+        {{/topic}}
+        {{^topic}}
+          Nobody has set a topic for this room so far.
+        {{/topic}}
+        You can change the topic by sending a command /topic &lt;The new topic&gt;</div>
       </div>
 
     </div>
 
     <div class="small-2 columns room-users-container" data-room-users-container>
     </div>
+
   <div class="row fullWidth form">
     <form class="form-msg" data-form-message>
       <div class="small-11 columns">

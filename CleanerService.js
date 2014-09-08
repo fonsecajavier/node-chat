@@ -33,7 +33,7 @@ function CleanerService(redisClient){
                   // right after all rooms were unjoined, delete all associated redis keys that are left
                   redisClient.store.multi()
                     .del("user:" + userToken)
-                    .del("user:nickname:" + userData.nickname)
+                    .del("user:nickname:" + userData.nickname.toLowerCase())
                     .srem("usersList", userToken)
                     .del("user:" + userToken + ":rooms")
                     .srem("disconnectedUsersList", userToken)

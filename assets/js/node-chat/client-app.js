@@ -59,6 +59,13 @@ NodeChat.ClientApp = Class.extend({
     });
   },
 
+  changeRoomTopic: function(roomToken, roomTopic, callback){
+    this.socket.json.send({type: "changeRoomTopic", roomToken: roomToken, roomTopic: roomTopic}, function(response){
+      callback(response);
+    });
+  },
+
+
   sendUserMessageToRoom: function(roomToken, message, callback){
     this.socket.json.send({type: "publishUserMessage", roomToken: roomToken, message: message}, function(response){
       callback(response);

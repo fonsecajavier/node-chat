@@ -38,6 +38,7 @@ NodeChat.Controllers.Init = NodeChat.Controllers.Base.extend({
   proceedConnecting: function(data){
     var _this = this;
     this.app.connect(data, function(){
+      console.log("connected as " + data.nickname + " [" + data.token + "]");
       _this.app.navbar.setNickname(data.nickname);
       _this.app.getMessageOfTheDay(function(message){
         new NodeChat.Controllers.Modals.MessageOfTheDay( _this.app, message ).openModal();

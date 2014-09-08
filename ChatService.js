@@ -272,6 +272,33 @@ function ChatService(chatClient, redisClient){
   }
 
   /*
+    changeRoomTopic
+      userToken: <user token>
+      roomToken: <room token>
+      roomTopic: <string>
+
+    callback
+      A hash with an "ok" status
+      Or a hash with an error key and the room token if user doesn't belong to the given room
+  */
+  messageProcessor.changeRoomTopic = function(data, callback){
+    var _this = this
+    embedUserToken(data);
+
+    findUserInRoom(data, function(presenceExists){
+      if(presenceExists){
+        redisClient.store.hset(["room:" + data.roomToken, "topic", data.roomTopic], function(err, response){
+          publishTopicChangedMessage(data);
+          callback({status: "ok"});
+        })
+      } else {
+        callback({error: "User doesn't belong to this room", roomToken: data.roomToken});
+      }
+    });
+  }
+
+
+  /*
     joinRoomByName
       roomName: <room name>
 
@@ -388,6 +415,18 @@ function ChatService(chatClient, redisClient){
     redisClient.pub.publish(channel, payload);
   }
 
+  var publishTopicChangedMessage = function(data){
+    var channel = "room:" + data.roomToken;
+    var payload = JSON.stringify({
+        type: "topicChanged",
+        userToken: chatClient.userToken,
+        roomToken: data.roomToken,
+        topic: data.roomTopic
+      })
+
+    redisClient.pub.publish(channel, payload);
+  }
+
   /*
     publishUserMessage
       roomToken: <room token>
@@ -445,13 +484,16 @@ function ChatService(chatClient, redisClient){
     "joinRoomByName": "joinRoomByName",
     "joinRoomByToken": "joinRoomByToken",
     "unjoinRoomByToken": "unjoinRoomByToken",
-    "publishUserMessage": "publishUserMessage"
+    "publishUserMessage": "publishUserMessage",
+    "changeRoomTopic": "changeRoomTopic"
   };
 
   this.processMessage = function(msg, callback){
     var fnName = this.validMessages[msg.type];
     if(!fnName){
-      callback({error: "Invalid message. Don't know how to process this type of message"});
+      var errorMsg = "Invalid message type '" + msg.type + "'. Don't know how to process this type of message";
+      console.log(errorMsg);
+      callback({error: errorMsg});
       return;
     }
 
@@ -481,7 +523,7 @@ function ChatService(chatClient, redisClient){
 }
 
 ChatService.connectClient = function(redisClient, nickname, token, callback){
-  var reservedKey = "user:nickname:" + nickname;
+  var reservedKey = "user:nickname:" + nickname.toLowerCase();
 
   redisClient.store.get(reservedKey, function (err, reply){
     if(reply == token){
@@ -507,7 +549,7 @@ ChatService.nicknameRegex = /[a-zA-Z][a-zA-Z\d-_]{2,15}/;
 
 ChatService.reserveNickname = function(redisClient, nickname, callback){
   var _this = this;
-  var reservedKey = "user:nickname:" + nickname;
+  var reservedKey = "user:nickname:" + nickname.toLowerCase();
 
   redisClient.store.multi()
     .get(reservedKey)
