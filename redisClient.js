@@ -1,11 +1,24 @@
-var redis = require('redis');
+function singleRedisClient(){
+  if (process.env.REDISTOGO_URL) {
+    var rtg   = require("url").parse(process.env.REDISTOGO_URL);
+    var redis = require("redis").createClient(rtg.port, rtg.hostname);
+    redis.auth(rtg.auth.split(":")[1]);
+    return redis;
+  } else {
+    return require("redis").createClient();
+  }
+}
 
-var dbIndex = 10;
+if(process.env.REDIS_DB_INDEX === undefined){
+  var dbIndex = 10;
+} else {
+  var dbIndex = process.env.REDIS_DB_INDEX;
+}
 
 var redisClient = {
-  store: redis.createClient(),
-  pub: redis.createClient(),
-  sub: redis.createClient()
+  store: singleRedisClient(),
+  pub: singleRedisClient(),
+  sub: singleRedisClient()
 }
 
 redisClient.store.select(dbIndex);
