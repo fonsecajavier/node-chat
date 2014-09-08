@@ -198,7 +198,6 @@ function ChatService(chatClient, redisClient){
           .exec(function (err, replies){
             data.userNickname = replies[0];
             publishUserJoinedMessage(data);
-            console.log("TODO: send message to all users notifying this guy joined");
             callback({roomToken: data.roomToken});
           })
       } else {

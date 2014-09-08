@@ -13,6 +13,9 @@ NodeChat.Controllers.ChatRoomsManager = NodeChat.Controllers.Base.extend({
 
     this.$container = $(rendered).appendTo(this.app.$container);
     $(document).foundation('tab', 'reflow'); // reflow binds listeners to dynamically generated content.
+
+    this.$tabTitles = this.$container.find("[data-chat-room-tab-titles]");
+    this.$tabContents = this.$container.find("[data-chat-room-tab-contents]");
   },
 
   bindEvents: function(){
@@ -49,11 +52,18 @@ NodeChat.Controllers.ChatRoomsManager = NodeChat.Controllers.Base.extend({
   removeChatRoomUI: function(roomToken){
     if(this.joinedRooms[roomToken]){
       console.log("removing chat room " + roomToken);
-      console.log("TODO: Handle the case when the unjoined room was the active.  Set the first one as active if there's one")
       this.app.unjoinRoomByToken(roomToken);
       var controller = this.joinedRooms[roomToken].controller;
       controller.removeFromDOM();
       delete this.joinedRooms[roomToken];
+
+      // sets focus on last tab if necessary
+      if(!this.$tabTitles.find("[data-tab-title].active").length){
+        var $lastTab = this.$tabTitles.find("[data-tab-title]:last");
+        if($lastTab.length){
+          this.joinedRooms[$lastTab.attr("data-room-token")].controller.focusTab();
+        }
+      }
     }
   },
 
@@ -63,8 +73,8 @@ NodeChat.Controllers.ChatRoomsManager = NodeChat.Controllers.Base.extend({
   },
 
   unFocusAllTabs: function(){
-    this.$container.find("[data-chat-room-tab-titles]").find("[data-tab-title]").removeClass("active");
-    this.$container.find("[data-chat-room-tab-contents]").find("[data-tab-content]").removeClass("active");
+    this.$tabTitles.find("[data-tab-title]").removeClass("active");
+    this.$tabContents.find("[data-tab-content]").removeClass("active");
   }
 
 });
