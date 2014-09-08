@@ -16,7 +16,7 @@ NodeChat.ClientApp = Class.extend({
 
     this.handshakeData = data;
 
-    this.socket = new io.connect('http://localhost', {
+    this.socket = new io.connect(window.location.origin, {
       query: $.param(this.handshakeData)
     });
 
