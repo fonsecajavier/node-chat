@@ -23,6 +23,6 @@
     "font-awesome": "~4.1.0",
     "underscore": "~1.6.0",
     "listjs": "~1.1.1",
-    "emotify": "git@github.com:cowboy/javascript-emotify.git#v0.6"
+    "emotify": "git://github.com/cowboy/javascript-emotify.git#v0.6"
   }
 }
