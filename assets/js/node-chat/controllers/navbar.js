@@ -12,6 +12,7 @@ NodeChat.Controllers.Navbar = NodeChat.Controllers.Base.extend({
     var rendered = Mustache.render(this.app.templates.navbar, {})
 
     this.$container = $(rendered).prependTo(this.app.$container);
+    $(document).foundation('topbar', 'reflow'); // binds some listeners to this dynamically generated content
 
     this.$roomsListOption = this.$container.find("[data-rooms-list-option]");
     this.$roomJoinOption = this.$container.find("[data-room-join-option]");
