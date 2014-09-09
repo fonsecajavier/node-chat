@@ -10,8 +10,7 @@ NodeChat.Controllers.ChatMessages.UserMessage = NodeChat.Controllers.ChatMessage
       userToken: this.messageObject.userToken,
       userNickname: this.messageObject.userNickname,
       userFontColor: this.messageObject.userFontColor,
-      message: this.messageObject.message,
+      message: $.emoticons.replace(_.escape(this.messageObject.message)),
     });
   }
-
 });

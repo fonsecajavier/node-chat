@@ -1,5 +1,6 @@
 //= require oop.js
 //= require mediator.js
+//= require emoticons-definition.js
 //= require node-chat/extras.js
 //= require node-chat/namespace.js
 //= require node-chat/client-app.js

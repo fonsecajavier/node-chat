@@ -22,6 +22,7 @@
     "mustache": "~0.8.2",
     "font-awesome": "~4.1.0",
     "underscore": "~1.6.0",
-    "listjs": "~1.1.1"
+    "listjs": "~1.1.1",
+    "emoticons": "git@github.com:kof/emoticons.git#0.1.7"
   }
 }
