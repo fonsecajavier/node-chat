@@ -72,6 +72,18 @@ NodeChat.ClientApp = Class.extend({
     });
   },
 
+  sendUserTypingToRoom: function(roomToken, callback){
+    this.socket.json.send({type: "publishUserTyping", roomToken: roomToken}, function(response){
+      callback(response);
+    });
+  },
+
+  sendUserStoppedTypingToRoom: function(roomToken, callback){
+    this.socket.json.send({type: "publishUserStoppedTyping", roomToken: roomToken}, function(response){
+      callback(response);
+    });
+  },
+
   joinRoomByToken: function(roomToken){
     var _this = this;
     // TODO: We should verify with the tab manager that user hasn't joined, before sending the command to the server

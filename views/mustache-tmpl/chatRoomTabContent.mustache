@@ -2,16 +2,21 @@
   <div class="row fullWidth messages-and-users">
     <div class="small-10 columns room-messages-container" data-room-messages-container>
 
-      <div class="row global">
-        <div class="small-2 columns">&nbsp;</div>
-        <div class="small-10 columns message">Welcome to {{name}} room.
-        {{#topic}}
-          The topic of this room is &quot;{{topic}}&quot;.
-        {{/topic}}
-        {{^topic}}
-          Nobody has set a topic for this room so far.
-        {{/topic}}
-        You can change the topic by sending a command /topic &lt;The new topic&gt;</div>
+      <div class="regular-messages" data-regular-messages>
+        <div class="row global">
+          <div class="small-2 columns">&nbsp;</div>
+          <div class="small-10 columns message">Welcome to {{name}} room.
+          {{#topic}}
+            The topic of this room is &quot;{{topic}}&quot;.
+          {{/topic}}
+          {{^topic}}
+            Nobody has set a topic for this room so far.
+          {{/topic}}
+          You can change the topic by sending a command /topic &lt;The new topic&gt;</div>
+        </div>
+      </div>
+
+      <div class="typing-messages">
       </div>
 
     </div>

@@ -426,19 +426,10 @@ function ChatService(chatClient, redisClient){
     redisClient.pub.publish(channel, payload);
   }
 
-  /*
-    publishUserMessage
-      roomToken: <room token>
-
-    Uses the Redis PUB/SUB API in order to publish a message from an user to
-    the channel identified by the room token.
-
-    callback
-      {status: "OK"}
-      or hash with error key in case the user doesn't exist anymore or if he
-      doesn't belong to that room
-  */
-  messageProcessor.publishUserMessage = function(data, callback){
+  // Performs full existence and coexistence verification on both userToken and roomToken
+  // that are passed in tha data hash param.  If everything looks right, it invokes a passed
+  // function "fn" with no arguments.  Otherwise, invokes "callback" with an error key
+  var publishFromUser = function(data, callback, fn) {
     var _this = this;
     redisClient.store.multi()
       .hgetall("user:" + chatClient.userToken)
@@ -460,17 +451,88 @@ function ChatService(chatClient, redisClient){
           callback({error: "User doesn't exist in this room"});
           return;
         }
-        var channel = "room:" + data.roomToken;
-        var payload = JSON.stringify({
-            type: "userMessage",
-            userToken: chatClient.userToken,
-            message: data.message,
-            roomToken: data.roomToken
-          })
 
-        redisClient.pub.publish(channel, payload);
-        callback({status: "OK"});
+        fn();
       });
+  }
+
+  /*
+    publishUserMessage
+      roomToken: <room token>
+
+    Uses the Redis PUB/SUB API in order to publish a message from an user to
+    the channel identified by the room token.
+
+    callback
+      {status: "OK"}
+      or hash with error key in case the user doesn't exist anymore or if he
+      doesn't belong to that room
+  */
+  messageProcessor.publishUserMessage = function(data, callback){
+    publishFromUser(data, callback, function(){
+      var channel = "room:" + data.roomToken;
+      var payload = JSON.stringify({
+          type: "userMessage",
+          userToken: chatClient.userToken,
+          message: data.message,
+          roomToken: data.roomToken
+        })
+
+      redisClient.pub.publish(channel, payload);
+      callback({status: "OK"});
+    });
+  }
+
+  /*
+    publishUserTyping
+      roomToken: <room token>
+
+    Uses the Redis PUB/SUB API in order to publish a typing notification from an user to
+    the channel identified by the room token.
+
+    callback
+      {status: "OK"}
+      or hash with error key in case the user doesn't exist anymore or if he
+      doesn't belong to that room
+  */
+  messageProcessor.publishUserTyping = function(data, callback){
+    publishFromUser(data, callback, function(){
+      var channel = "room:" + data.roomToken;
+      var payload = JSON.stringify({
+          type: "userTyping",
+          userToken: chatClient.userToken,
+          roomToken: data.roomToken
+        })
+
+      redisClient.pub.publish(channel, payload);
+      callback({status: "OK"});
+    });
+  }
+
+  /*
+    publishUserStoppedTyping
+      roomToken: <room token>
+
+    Uses the Redis PUB/SUB API in order to publish a stopped-typing notification from an user to
+    the channel identified by the room token.
+
+    callback
+      {status: "OK"}
+      or hash with error key in case the user doesn't exist anymore or if he
+      doesn't belong to that room
+  */
+  messageProcessor.publishUserStoppedTyping = function(data, callback){
+    publishFromUser(data, callback, function(){
+      var channel = "room:" + data.roomToken;
+      var payload = JSON.stringify({
+          type: "userStoppedTyping",
+          userToken: chatClient.userToken,
+          roomToken: data.roomToken
+        })
+
+      redisClient.pub.publish(channel, payload);
+      callback({status: "OK"});
+    });
   }
 
   // Functions map and possible aliases.
@@ -484,6 +546,8 @@ function ChatService(chatClient, redisClient){
     "joinRoomByToken": "joinRoomByToken",
     "unjoinRoomByToken": "unjoinRoomByToken",
     "publishUserMessage": "publishUserMessage",
+    "publishUserTyping": "publishUserTyping",
+    "publishUserStoppedTyping": "publishUserStoppedTyping",
     "changeRoomTopic": "changeRoomTopic"
   };
 

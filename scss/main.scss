@@ -68,14 +68,14 @@ body {
       height: 100%;
       padding-bottom: 75px;
       .room-messages-container{
-        &> .row {
+        & .row {
           position: relative;
         }
-        &> .row .columns:first-child{
+        & .row .columns:first-child{
           position: absolute;
           height: 100%;
         }
-        &> .row .columns{
+        & .row .columns{
           border-width: 0px 0px 1px 1px;
           border-style: solid;
           border-color: #DDDDDD;          

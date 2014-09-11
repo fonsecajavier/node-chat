@@ -42,6 +42,7 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
     this.$tabContentContainer = $(renderedContent).appendTo(this.$tabContents);
 
     this.$messagesContainer = this.$tabContentContainer.find("[data-room-messages-container]");
+    this.$messagesContainerRegular = this.$messagesContainer.find("[data-regular-messages]");
 
     this.$usersContainer =  this.$tabContentContainer.find("[data-room-users-container]");
 
@@ -71,6 +72,29 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
     this.bindMessagesScrolled();
     this.bindSendMessageButton();
     this.bindCloseTabButton();
+    this.bindInputTyping();
+  },
+
+  bindInputTyping: function(){
+    var _this = this;
+
+    this.$messageInput.on("input", function(){
+      _this.app.sendUserTypingToRoom(_this.roomData.roomToken, function(response){
+        if(response.status != "OK"){
+          console.log("Error sending typing notifiaction to room " + _this.roomData.roomToken);
+        }
+      }.bind(_this));
+    });
+  },
+
+  sendUserStoppedTyping: function(){
+    var _this = this;
+    
+    this.app.sendUserStoppedTypingToRoom(this.roomData.roomToken, function(response){
+      if(response.status != "OK"){
+        console.log("Error sending stopped-typing notifiaction to room " + _this.roomData.roomToken);
+      }
+    }.bind(_this));
   },
 
   bindMessagesScrolled: function(){
@@ -113,12 +137,14 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
         return false;
       }
 
-      if(!_this.processCommand(msg)){
+      if(!_this.processCommand(msg)){ /* typed message was not a command like /topic, so it's a sendable message */
         _this.app.sendUserMessageToRoom(_this.roomData.roomToken, msg, function(response){
           if(response.status != "OK"){
-            console.log("Error sending message from room " + _this.roomData.roomToken);
+            console.log("Error sending message to room " + _this.roomData.roomToken);
           }
         }.bind(_this));
+
+        _this.sendUserStoppedTyping();
       }
 
       _this.$messageInput.val("");
@@ -217,7 +243,7 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
     );
 
     var wasInTheBottom = this.isScrollingToTheBottom();
-    $(msgController.generateHTML()).appendTo(this.$messagesContainer);    
+    $(msgController.generateHTML()).appendTo(this.$messagesContainerRegular);
 
     if(wasInTheBottom){
       this.scrollToTheBottom();
