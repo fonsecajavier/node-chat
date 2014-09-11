@@ -9,6 +9,7 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
   $formMessage: null,
   roomData: null,
   newMessages: 0,
+  lastTypingTs: null,
 
   init: function(app, $tabsManager, roomToken, initCompleted){
     this._super( app );
@@ -43,6 +44,7 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
 
     this.$messagesContainer = this.$tabContentContainer.find("[data-room-messages-container]");
     this.$messagesContainerRegular = this.$messagesContainer.find("[data-regular-messages]");
+    this.$messagesContainerTyping = this.$messagesContainer.find("[data-typing-messages]");
 
     this.$usersContainer =  this.$tabContentContainer.find("[data-room-users-container]");
 
@@ -79,11 +81,15 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
     var _this = this;
 
     this.$messageInput.on("input", function(){
-      _this.app.sendUserTypingToRoom(_this.roomData.roomToken, function(response){
-        if(response.status != "OK"){
-          console.log("Error sending typing notifiaction to room " + _this.roomData.roomToken);
-        }
-      }.bind(_this));
+      var currentTs = (new Date().getTime());
+      if(currentTs > _this.lastTypingTs + 3000){
+        _this.app.sendUserTypingToRoom(_this.roomData.roomToken, function(response){
+          if(response.status != "OK"){
+            console.log("Error sending typing notification to room " + _this.roomData.roomToken);
+          }
+        }.bind(_this));
+        _this.lastTypingTs = currentTs;
+      }
     });
   },
 
@@ -92,9 +98,11 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
     
     this.app.sendUserStoppedTypingToRoom(this.roomData.roomToken, function(response){
       if(response.status != "OK"){
-        console.log("Error sending stopped-typing notifiaction to room " + _this.roomData.roomToken);
+        console.log("Error sending stopped-typing notification to room " + _this.roomData.roomToken);
       }
     }.bind(_this));
+
+    this.lastTypingTs = null;
   },
 
   bindMessagesScrolled: function(){
@@ -197,7 +205,7 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
   },
 
   processMediatorMessage: function(data){
-    validMessages = ["userMessage", "userUnjoined", "userJoined", "topicChanged", "global"];
+    validMessages = ["userMessage", "userUnjoined", "userJoined", "topicChanged", "userTyping", "userStoppedTyping", "global"];
 
     console.log("Received message for chatRoom " + this.roomData.roomToken + " - " + JSON.stringify(data));
 
@@ -206,32 +214,47 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
       return;
     }
 
-    if(_.indexOf(["userMessage", "userUnjoined", "topicChanged"], data.type) != -1){
-      var user = null;
-      user = this.findUserInList(data.userToken);
+    if(_.indexOf(["userTyping", "userStoppedTyping"], data.type) != -1 & data.userToken == this.app.connectionData.token ){
+      // don't show user typing notification for ourselves
+      return;
+    }
 
+    if(data.userToken){
+      var user = this.findUserInList(data.userToken);
+    }
+
+    if(_.indexOf(["userMessage", "userUnjoined", "topicChanged", "userTyping", "userStoppedTyping"], data.type) != -1){
       // adds the nickname to the hash so that it can also be rendered:
       data.userNickname = user.nickname;
       data.userFontColor = user.fontColor;
     }
 
-    if(data.type == "userJoined"){
-      this.addUserToList({
-        token: data.userToken,
-        nickname: data.userNickname,
-        fontColor: this.generateRandomFontColor()
-      })
+    switch(data.type){
+      case "userJoined":
+        this.addUserToList({
+          token: data.userToken,
+          nickname: data.userNickname,
+          fontColor: this.generateRandomFontColor()
+        })
+        break;
+      case "userUnjoined":
+        this.removeUserFromList(data.userToken);
+        break;
+      case "topicChanged":
+        this.roomData.topic = data.topic;
+        break;
+      case "userTyping":
+        break;
+      case "userStoppedTyping":
+        this.removeUserTypingNotification(data.userToken);
+        return; // don't render anything
+        break;
     }
-
-    if(data.type == "userUnjoined"){
-      this.removeUserFromList(data.userToken);
-    }
-
-    if(data.type == "topicChanged"){
-      this.roomData.topic = data.topic;
-    }
-
     this.renderMessage(data);
+  },
+
+  removeUserTypingNotification: function(userToken){
+    this.$messagesContainerTyping.find("[data-userToken='" + userToken + "']").remove();
   },
 
   renderMessage: function(data){
@@ -242,8 +265,16 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
       data
     );
 
+    var htmlMsg = msgController.generateHTML();
     var wasInTheBottom = this.isScrollingToTheBottom();
-    $(msgController.generateHTML()).appendTo(this.$messagesContainerRegular);
+
+    if(data.type == "userTyping"){
+      if(this.$messagesContainerTyping.find("[data-userToken='" + data.userToken + "']").length == 0){
+        $(htmlMsg).appendTo(this.$messagesContainerTyping);
+      }
+    } else {
+      $(htmlMsg).appendTo(this.$messagesContainerRegular);
+    }
 
     if(wasInTheBottom){
       this.scrollToTheBottom();

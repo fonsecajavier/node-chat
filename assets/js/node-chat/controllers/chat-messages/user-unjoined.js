@@ -8,8 +8,7 @@ NodeChat.Controllers.ChatMessages.UserUnjoined = NodeChat.Controllers.ChatMessag
   processedMessageObject: function(){
     return({
       userToken: this.messageObject.userToken,
-      userNickname: this.messageObject.userNickname,
-      message: this.messageObject.message
+      userNickname: this.messageObject.userNickname
     });
   }
 

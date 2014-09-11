@@ -98,6 +98,12 @@ body {
             color: red;
           }
         }
+        .user-typing{
+          .message {
+            font-style: italic;
+            color: #888;
+          }
+        }
         .global{
           .message {
             font-weight: bold;

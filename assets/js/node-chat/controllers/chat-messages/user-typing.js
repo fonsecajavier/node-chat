@@ -1,8 +1,8 @@
-NodeChat.Controllers.ChatMessages.UserJoined = NodeChat.Controllers.ChatMessages.Base.extend({
+NodeChat.Controllers.ChatMessages.UserTyping = NodeChat.Controllers.ChatMessages.Base.extend({
 
   init: function(app, templateName, messageObject){
     this._super.apply(this, arguments);
-    this.templateName = "chatRoomMessageUserJoined";
+    this.templateName = "chatRoomMessageUserTyping";
   },
 
   processedMessageObject: function(){
