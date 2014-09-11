@@ -26,6 +26,33 @@ NodeChat.ClientApp = Class.extend({
       callback();
     });
 
+    this.socket.on('connect_failed', function() {
+      debugger;
+    });
+
+    this.socket.on('error', function(msg) {
+      debugger;
+    });
+
+    this.socket.on('connect_error', function(error) {
+      console.log(error);
+      debugger;
+    });
+
+    this.socket.on('reconnect_error', function(error) {
+      console.log(error);
+      debugger;
+    });
+
+    this.socket.on('reconnecting', function(number) {
+      console.log("reconnecting " + number);
+    });
+
+    this.socket.on('reconnect', function(number) {
+      console.log("reconnect " + number);
+    });
+
+
     this.socket.on("message", function(message) {
       console.log("message received from server: " + JSON.stringify(message));
       if(message.roomToken){
