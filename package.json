@@ -13,7 +13,7 @@
     "node-sass": "^0.9.3",
     "node-uuid": "^1.4.1",
     "redis": "^0.11.0",
-    "socket.io": "^1.0.6",
+    "socket.io": "^1.1.0",
     "swig": "^1.4.2"
   },
   "engines": {
