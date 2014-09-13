@@ -82,15 +82,34 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
 
     this.$messageInput.on("input", function(){
       var currentTs = (new Date().getTime());
-      if(currentTs > _this.lastTypingTs + 3000){
+      if(currentTs >_this.lastTypingTs + 2000){
         _this.app.sendUserTypingToRoom(_this.roomData.roomToken, function(response){
           if(response.status != "OK"){
-            console.log("Error sending typing notification to room " + _this.roomData.roomToken);
+             console.log("Error sending typing notification to room " + _this.roomData.roomToken);
           }
         }.bind(_this));
-        _this.lastTypingTs = currentTs;
+
+      }
+      _this.lastTypingTs = currentTs;
+
+      if(!_this.typingCheckScheduled){
+        _this.typingCheckScheduled = true;
+        setTimeout(_this.typingCheck.bind(_this), 3000);
       }
     });
+  },
+
+  typingCheck: function(){
+    if(!this.typingCheckScheduled){
+      return;
+    }
+
+    var currentTs = (new Date().getTime());
+    if(currentTs > this.lastTypingTs + 2000){
+      this.sendUserStoppedTyping();
+    } else{
+      setTimeout(this.typingCheck.bind(this), 3000);
+    }
   },
 
   sendUserStoppedTyping: function(){
@@ -103,6 +122,7 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
     }.bind(_this));
 
     this.lastTypingTs = null;
+    this.typingCheckScheduled = false;
   },
 
   bindMessagesScrolled: function(){
