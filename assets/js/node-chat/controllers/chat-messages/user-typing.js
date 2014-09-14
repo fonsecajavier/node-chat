@@ -8,7 +8,8 @@ NodeChat.Controllers.ChatMessages.UserTyping = NodeChat.Controllers.ChatMessages
   processedMessageObject: function(){
     return({
       userToken: this.messageObject.userToken,
-      userNickname: this.messageObject.userNickname
+      userNickname: this.messageObject.userNickname,
+      userFontColor: this.messageObject.userFontColor
     });
   }
 

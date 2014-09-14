@@ -25,6 +25,7 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
         _this.roomData.usersList = usersList;
         _this.roomData.usersList.forEach(function(user){
           user.fontColor = _this.generateRandomFontColor();
+          user.lastTypingTs = null;
         });
         _this.render();
         _this.bindEvents();
@@ -225,6 +226,7 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
   },
 
   processMediatorMessage: function(data){
+    var _this = this;
     validMessages = ["userMessage", "userUnjoined", "userJoined", "topicChanged", "userTyping", "userStoppedTyping", "global"];
 
     console.log("Received message for chatRoom " + this.roomData.roomToken + " - " + JSON.stringify(data));
@@ -254,7 +256,8 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
         this.addUserToList({
           token: data.userToken,
           nickname: data.userNickname,
-          fontColor: this.generateRandomFontColor()
+          fontColor: this.generateRandomFontColor(),
+          lastTypingTs: null
         })
         break;
       case "userUnjoined":
@@ -264,8 +267,21 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
         this.roomData.topic = data.topic;
         break;
       case "userTyping":
+        user.lastTypingTs = (new Date()).getTime();
+        user.typingCheck = _.delay(function(user){  // _.delay() is an underscore's cross-browser implementation of setTimeout that receives arguments
+          if(!user){ return; }
+
+          var currentTs = (new Date()).getTime();
+          if(currentTs >= user.lastTypingTs + 5000){
+            console.log("Removing typing notification for user " + user.nickname + " due to lastTypingTs timeout");
+            user.lastTypingTs = null;
+            _this.removeUserTypingNotification(user.token);
+          }
+        }.bind(this), 5000, user);
         break;
       case "userStoppedTyping":
+        user.lastTypingTs = null;
+        clearTimeout(user.typingCheck);
         this.removeUserTypingNotification(data.userToken);
         return; // don't render anything
         break;
@@ -274,7 +290,7 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
   },
 
   removeUserTypingNotification: function(userToken){
-    this.$messagesContainerTyping.find("[data-userToken='" + userToken + "']").remove();
+    this.$messagesContainerTyping.find("[data-userToken='" + userToken + "']").fadeOut(300, function() { $(this).remove(); });
   },
 
   renderMessage: function(data){
