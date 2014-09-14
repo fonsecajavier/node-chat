@@ -268,6 +268,7 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
         break;
       case "userTyping":
         user.lastTypingTs = (new Date()).getTime();
+        // this delayed check ensures that typing notifications for bad clients (or that went offline) are properly removed and cleaned up
         user.typingCheck = _.delay(function(user){  // _.delay() is an underscore's cross-browser implementation of setTimeout that receives arguments
           if(!user){ return; }
 
