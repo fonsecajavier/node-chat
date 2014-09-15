@@ -280,6 +280,13 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
           }
         }.bind(this), 5000, user);
         break;
+      case "userMessage":
+        var $lastMsg = this.$messagesContainerRegular.find("> :last");
+        // Don't show nickname again if last message was also an user message from that same user:
+        if($lastMsg.hasClass("user-message") && $lastMsg.attr("data-userToken") == data.userToken){
+          data.userNickname = "";
+        }
+        break;
       case "userStoppedTyping":
         user.lastTypingTs = null;
         clearTimeout(user.typingCheck);
