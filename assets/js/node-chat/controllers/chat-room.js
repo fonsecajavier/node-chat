@@ -323,7 +323,9 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
     if(wasInTheBottom){
       this.scrollToTheBottom();
     } else {
-      this.countMessage();
+      if(_.indexOf(["userTyping", "userStoppedTyping"], data.type) == -1){
+        this.countMessage();
+      }
     }
   },
 
