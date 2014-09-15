@@ -1,5 +1,6 @@
 var uuid = require('node-uuid');
 var async = require('async');
+var und = require('lodash');  // Same underscore functionality but includes some other goodies
 
 // Please look at "Chat Kernel data-layout" for more info on the REDIS data structure
 // that was implemented
@@ -611,24 +612,45 @@ function ChatService(chatClient, redisClient){
     "disconnectClient": "disconnectClient"
   };
 
+  this.onUserExists = function(userToken, onExistsFn, onNotExistsFn){
+    var _this = this;
+    redisClient.store.exists("user:" + chatClient.userToken, function (err, reply){
+      if(reply){
+        if(und.isFunction(onExistsFn)){
+          onExistsFn.call(_this);
+        }
+      } else {
+        if(und.isFunction(onExistsFn)){
+          onNotExistsFn.call(_this);
+        }
+      }
+    });
+  };
+
   this.processMessage = function(msg, callback){
-    var fnName = this.validMessages[msg.type];
-    if(!fnName){
-      var errorMsg = "Invalid message type '" + msg.type + "'. Don't know how to process this type of message";
-      console.log(errorMsg);
-      callback({error: errorMsg});
-      return;
-    }
+    var _this = this;
 
-    var stringifiedData = JSON.stringify(msg) || "";
-    console.log("processing protocol message from userToken " + chatClient.userToken + " [" + msg.type + "] " + stringifiedData);
+    this.onUserExists(chatClient.userToken, function(){
+      var fnName = _this.validMessages[msg.type];
+      if(!fnName){
+        var errorMsg = "Invalid message type '" + msg.type + "'. Don't know how to process this type of message";
+        console.log(errorMsg);
+        callback({error: errorMsg});
+        return;
+      }
 
-    var fn = messageProcessor[fnName];
-    if(fn.length == 1){
-      fn.call(this, callback);
-    } else if(fn.length == 2){
-      fn.call(this, msg, callback);
-    }
+      var stringifiedData = JSON.stringify(msg) || "";
+      console.log("processing protocol message from userToken " + chatClient.userToken + " [" + msg.type + "] " + stringifiedData);
+
+      var fn = messageProcessor[fnName];
+      if(fn.length == 1){
+        fn.call(_this, callback);
+      } else if(fn.length == 2){
+        fn.call(_this, msg, callback);
+      }
+    }, function(){
+      console.log("Ignoring message "+ JSON.stringify(msg) + " from user with invalid token: " + chatClient.userToken);
+    });
   }
 
   this.setDisconnectedClient = function(token, callback){
