@@ -535,6 +535,65 @@ function ChatService(chatClient, redisClient){
     });
   }
 
+  this.disconnectClient = function(data, callback){
+    var _this = this;
+    redisClient.store.hgetall(["user:" + data.userToken], function(err, userData){
+      if(userData){
+        console.log("Connection with user " + userData.nickname + " (" + data.userToken + ") has been lost.  Unjoining from rooms and removing all keys" )
+        // start by sending unjoin signal from all channels
+        redisClient.store.smembers("user:" + data.userToken + ":rooms", function(err, roomTokens){
+          async.map(roomTokens, function(roomToken, callback){
+            var data = {
+              userToken: this.data.userToken,
+              roomToken: roomToken
+            }
+            this.chatService.unjoinUserFromRoom(data, function(result){
+              callback(null, result);
+            });
+          }.bind({chatService: _this, data: data}), function(err, results){
+            // right after all rooms were unjoined, delete all associated redis keys that are left
+            redisClient.store.multi()
+              .del("user:" + data.userToken)
+              .del("user:nickname:" + (userData.nickname || "").toLowerCase())
+              .srem("usersList", data.userToken)
+              .del("user:" + data.userToken + ":rooms")
+              .srem("disconnectedUsersList", data.userToken)
+              .exec(function (err, replies){
+                callback("OK");
+              });
+          })
+        });
+      } else {
+        // User was non-existant for some reason.  Just remove it from the disconnected users sslist.
+        console.log("User with token " + data.userToken + " was marked for deletion but is already non-existant for some reason.")
+        redisClient.store.srem(["disconnectedUsersList", data.userToken], function(err, remCount){
+          callback("OK");
+        });
+
+      }
+    });
+  },
+
+  /*
+    disconnectClient
+      userToken: <user token>
+
+    Unjoin user from all rooms and remove all keys from the Redis DB.
+    Send "user unjoined" notification to those rooms.
+
+    callback
+      {status: "OK"}
+  */
+  messageProcessor.disconnectClient = function(callback){
+    var data = {};
+    embedUserToken(data);
+    this.disconnectClient(data, function(response){
+      console.log("Handled user [" + data.userToken + "] disconnection request: " + response);
+      callback({status: response});
+    });
+  }
+
+
   // Functions map and possible aliases.
   this.validMessages = {
     "messageOfTheDay": "messageOfTheDay",
@@ -548,7 +607,8 @@ function ChatService(chatClient, redisClient){
     "publishUserMessage": "publishUserMessage",
     "publishUserTyping": "publishUserTyping",
     "publishUserStoppedTyping": "publishUserStoppedTyping",
-    "changeRoomTopic": "changeRoomTopic"
+    "changeRoomTopic": "changeRoomTopic",
+    "disconnectClient": "disconnectClient"
   };
 
   this.processMessage = function(msg, callback){
