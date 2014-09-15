@@ -2,12 +2,17 @@ var redisClient = require('./redisClient');
 var ChatService = require('./ChatService');
 
 module.exports = function(http){
+  var socketClients = {}
+
+  ChatService.channelMessagesHandler(redisClient, socketClients);
+
   var io = require('socket.io')(http);
 
   // Authentication
   io.use(function(socket, next) {
     var nickname = socket.request._query.nickname;
     var token = socket.request._query.token;
+    socketClients[token] = socket;
 
     ChatService.connectClient(redisClient, nickname, token, function(status){
       if(status == "OK"){
@@ -32,7 +37,6 @@ module.exports = function(http){
     }
 
     var chatService = new ChatService(chatClient, redisClient);
-    chatService.subscribe();
 
     socket.on("message", function(msg, ackFn){
       if(Object.prototype.toString.call(msg) != '[object Object]'){
@@ -51,6 +55,7 @@ module.exports = function(http){
     socket.on("disconnect", function(){
       // NOTE: we might now want to delete the user immediately, but wait a reasonable
       // amount of time before declaring him dead, giving them a chance to reconnect.
+      delete socketClients[token];
       chatService.setDisconnectedClient(token, function(status){
         if(status == "OK"){
           console.log("client disconnected: " + nickname + "#" + token);

@@ -146,10 +146,7 @@ function ChatService(chatClient, redisClient){
     NOT DIRECTLY USED IN THE NET PROTOCOL
   */
   var findUserInRoom = function(data, callback){
-    var key = "user:" + data.userToken + ":room:" + data.roomToken;
-    redisClient.store.exists(key, function (err, reply){
-      callback(reply);
-    });
+    ChatService.findUserInRoom(redisClient, data, callback);
   };
 
   /*
@@ -370,25 +367,6 @@ function ChatService(chatClient, redisClient){
       } else {
         callback({error: "Room with such token doesn't exist"});
       }
-    });
-  }
-
-  /*
-    subscribe
-  */
-  this.subscribe = function(){
-    redisClient.sub.on("message", function(channel, message){
-      if(!(/^room:/).test(channel)){
-        return;
-      }
-
-      data = JSON.parse(message);
-
-      findUserInRoom({roomToken: data.roomToken, userToken: chatClient.userToken}, function(presenceExists){
-        if(presenceExists){
-          chatClient.client.send(data);
-        }
-      });
     });
   }
 
@@ -731,13 +709,14 @@ ChatService.roomsListTokens = function(redisClient, callback){
 
 ChatService.subscribeExistingChannels = function(redisClient){
   this.roomsListTokens(redisClient, function(roomTokens){
+    // a worker will notify all the others about subscribing to a specific channel by publishing to this one:
+    redisClient.sub.subscribe("chatService:sync:subscribeChannel");
+
     roomTokens.forEach(function(roomToken){
       console.log("Subscribing to existing room " + roomToken);
       redisClient.sub.subscribe("room:" + roomToken);
     });
 
-    // a worker will notify all the others about subscribing to a specific channel by publishing to this one:
-    redisClient.sub.subscribe("chatService:sync:subscribeChannel");
     redisClient.sub.on("message", function(channel, message){
       if(channel != "chatService:sync:subscribeChannel"){
         return;
@@ -747,6 +726,33 @@ ChatService.subscribeExistingChannels = function(redisClient){
       redisClient.sub.subscribe(channel);
     });
   })
+}
+
+ChatService.findUserInRoom = function(redisClient, data, callback){
+  var key = "user:" + data.userToken + ":room:" + data.roomToken;
+  redisClient.store.exists(key, function (err, reply){
+    callback(reply);
+  });
+};
+
+ChatService.channelMessagesHandler = function(redisClient, socketClients){
+  redisClient.sub.on("message", function(channel, message){
+    if(!(/^room:/).test(channel)){
+      return;
+    }
+    data = JSON.parse(message);
+
+    Object.keys(socketClients).forEach(function(userToken){
+      var socketClient = socketClients[userToken];
+
+      ChatService.findUserInRoom(redisClient, {roomToken: data.roomToken, userToken: userToken}, function(presenceExists){
+        //console.log("sending message " + JSON.stringify(data) + " to " + userToken)
+        if(presenceExists){
+          socketClient.send(data);
+        }
+      });
+    });
+  });
 }
 
 module.exports = ChatService;
