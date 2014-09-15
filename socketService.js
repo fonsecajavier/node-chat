@@ -4,20 +4,37 @@ var ChatService = require('./ChatService');
 module.exports = function(http){
   var io = require('socket.io')(http);
 
-  io.sockets.on("connection", function(client){
-    var nickname = client.handshake.query.nickname;
-    var token = client.handshake.query.token;
+  // Authentication
+  io.use(function(socket, next) {
+    var nickname = socket.request._query.nickname;
+    var token = socket.request._query.token;
+
+    ChatService.connectClient(redisClient, nickname, token, function(status){
+      if(status == "OK"){
+        socketConnectionHandler(socket);
+        console.log("connection token validated for " + nickname + "#" + token);
+        next();
+      } else {
+        console.log("invalid connection token received: " + nickname + "#" + token);
+        next(new Error(status.error));
+      }
+    });
+  });
+
+  function socketConnectionHandler(socket){
+    var nickname = socket.handshake.query.nickname;
+    var token = socket.handshake.query.token;
     console.log("client connected: " + nickname + "#" + token);
 
     var chatClient = {
       userToken: token,
-      client: client // callback function that receives a message hash as parameter
+      client: socket // callback function that receives a message hash as parameter
     }
 
     var chatService = new ChatService(chatClient, redisClient);
     chatService.subscribe();
 
-    client.on("message", function(msg, ackFn){
+    socket.on("message", function(msg, ackFn){
       if(Object.prototype.toString.call(msg) != '[object Object]'){
         ackFn({error: "Invalid message. Should be a hash"});
         return;
@@ -31,7 +48,7 @@ module.exports = function(http){
       chatService.processMessage(msg, ackFn);
     });
 
-    client.on("disconnect", function(){
+    socket.on("disconnect", function(){
       // NOTE: we might now want to delete the user immediately, but wait a reasonable
       // amount of time before declaring him dead, giving them a chance to reconnect.
       chatService.setDisconnectedClient(token, function(status){
@@ -40,23 +57,6 @@ module.exports = function(http){
         }
       });
     });
-
-  })
-
-  // Authentication
-  io.use(function(socket, next) {
-    var nickname = socket.request._query.nickname;
-    var token = socket.request._query.token;
-
-    ChatService.connectClient(redisClient, nickname, token, function(status){
-      if(status == "OK"){
-        console.log("connection token validated for " + nickname + "#" + token);
-        next();
-      } else {
-        console.log("invalid connection token received: " + nickname + "#" + token);
-        next(new Error(status.error));
-      }
-    });
-  });
+  }
 
 };
