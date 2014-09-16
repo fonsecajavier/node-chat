@@ -456,7 +456,6 @@ function ChatService(chatClient, redisClient){
           message: data.message,
           roomToken: data.roomToken
         })
-
       redisClient.pub.publish(channel, payload);
       callback({status: "OK"});
     });
@@ -736,6 +735,16 @@ ChatService.findUserInRoom = function(redisClient, data, callback){
 };
 
 ChatService.channelMessagesHandler = function(redisClient, socketClients){
+
+  var sendMessage = function(userToken, socketClient, data){
+    ChatService.findUserInRoom(redisClient, {roomToken: data.roomToken, userToken: userToken}, function(presenceExists){
+      console.log("sending message " + JSON.stringify(data) + " to " + userToken)
+      if(presenceExists){
+        socketClient.send(data);
+      }
+    });
+  }
+
   redisClient.sub.on("message", function(channel, message){
     if(!(/^room:/).test(channel)){
       return;
@@ -744,13 +753,7 @@ ChatService.channelMessagesHandler = function(redisClient, socketClients){
 
     Object.keys(socketClients).forEach(function(userToken){
       var socketClient = socketClients[userToken];
-
-      ChatService.findUserInRoom(redisClient, {roomToken: data.roomToken, userToken: userToken}, function(presenceExists){
-        //console.log("sending message " + JSON.stringify(data) + " to " + userToken)
-        if(presenceExists){
-          socketClient.send(data);
-        }
-      });
+      sendMessage(userToken, socketClient, data);
     });
   });
 }
