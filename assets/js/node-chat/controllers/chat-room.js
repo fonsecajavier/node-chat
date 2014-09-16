@@ -10,6 +10,8 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
   roomData: null,
   newMessages: 0,
   lastTypingTs: null,
+  typingCheckScheduled: null,
+  typing: false,
 
   init: function(app, $tabsManager, roomToken, initCompleted){
     this._super( app );
@@ -93,23 +95,19 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
       }
       _this.lastTypingTs = currentTs;
 
-      if(!_this.typingCheckScheduled){
-        _this.typingCheckScheduled = true;
-        setTimeout(_this.typingCheck.bind(_this), 3000);
+      if(!_this.typing){
+        _this.typing = true;
+        _this.typingCheckScheduled = setTimeout(_this.typingCheck.bind(_this), 3000);
       }
     });
   },
 
   typingCheck: function(){
-    if(!this.typingCheckScheduled){
-      return;
-    }
-
     var currentTs = (new Date().getTime());
     if(currentTs > this.lastTypingTs + 2000){
       this.sendUserStoppedTyping();
     } else{
-      setTimeout(this.typingCheck.bind(this), 3000);
+      this.typingCheckScheduled = setTimeout(this.typingCheck.bind(this), 3000);
     }
   },
 
@@ -123,7 +121,8 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
     }.bind(_this));
 
     this.lastTypingTs = null;
-    this.typingCheckScheduled = false;
+    clearTimeout(this.typingCheckScheduled);
+    this.typing = false;
   },
 
   bindMessagesScrolled: function(){
