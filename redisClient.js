@@ -21,8 +21,10 @@ var redisClient = {
   sub: singleRedisClient()
 }
 
-redisClient.store.select(dbIndex);
-redisClient.pub.select(dbIndex);
-redisClient.sub.select(dbIndex);
+if(dbIndex != "0"){
+  redisClient.store.select(dbIndex);
+  redisClient.pub.select(dbIndex);
+  redisClient.sub.select(dbIndex);
+}
 
 module.exports = redisClient;
