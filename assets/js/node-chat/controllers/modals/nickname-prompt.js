@@ -100,6 +100,7 @@ NodeChat.Controllers.Modals.NicknamePrompt = NodeChat.Controllers.Modals.Base.ex
     .done(function(data){
       _this.showAlert(
         "Nickname is available!  Connecting...");
+      _this.app.showMOTD = true;
       _this.app.mediator.publish("proceedConnecting", data);
       _this.app.mediator.subscribe("clientConnected", _this.connectionSuccess, {}, _this);
     })

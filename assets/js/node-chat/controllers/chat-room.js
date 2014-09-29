@@ -74,6 +74,8 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
 
   bindEvents: function(){
     this.app.mediator.subscribe("chatRoom:message:" + this.roomData.roomToken, this.processMediatorMessage, {}, this);
+    this.app.mediator.subscribe("chatApp:connected", this.processConnected, {}, this);
+    this.app.mediator.subscribe("chatApp:disconnected", this.processDisconnected, {}, this);
     this.bindMessagesScrolled();
     this.bindSendMessageButton();
     this.bindCloseTabButton();
@@ -160,6 +162,10 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
     });
 
     this.$messageSend.on("click", function(evt){
+      if(_this.$messageInput.prop("disabled")){
+        return false;
+      }
+
       var msg = _this.$messageInput.val();
       if(!msg.trim()){
         return false;
@@ -224,6 +230,14 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
     this.$usersContainer.find("[data-user-token='" + userToken+ "']").remove();
   },
 
+  processConnected: function(){
+    this.$messageInput.prop("disabled", false);
+  },
+
+  processDisconnected: function(){
+    this.$messageInput.prop("disabled", true);
+  },
+
   processMediatorMessage: function(data){
     var _this = this;
     validMessages = ["userMessage", "userUnjoined", "userJoined", "topicChanged", "userTyping", "userStoppedTyping", "global"];
@@ -235,7 +249,7 @@ NodeChat.Controllers.ChatRoom = NodeChat.Controllers.Base.extend({
       return;
     }
 
-    if(_.indexOf(["userTyping", "userStoppedTyping"], data.type) != -1 & data.userToken == this.app.connectionData.token ){
+    if(_.indexOf(["userTyping", "userStoppedTyping"], data.type) != -1 & data.userToken == this.app.handshakeData.token ){
       // don't show user typing notification for ourselves
       return;
     }

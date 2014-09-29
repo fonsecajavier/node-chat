@@ -52,9 +52,9 @@ module.exports = function(http){
       chatService.processMessage(msg, ackFn);
     });
 
-    socket.on("disconnect", function(){
-      // NOTE: we might now want to delete the user immediately, but wait a reasonable
-      // amount of time before declaring him dead, giving them a chance to reconnect.
+    socket.on("disconnect", function(msg){
+      // TODO: detect here that the user was doing a friendly disconnect in order to prevent him
+      // from being added to the list of users to be cleaned up.
       delete socketClients[token];
       chatService.setDisconnectedClient(token, function(status){
         if(status == "OK"){

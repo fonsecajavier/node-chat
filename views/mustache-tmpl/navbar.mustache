@@ -12,19 +12,31 @@
   <section class="top-bar-section">
     <!-- Right Nav Section -->
     <ul class="right">
-      <li data-nickname><a href="#" data-nickname>&nbsp;</a></li>
-      <li class="has-dropdown not-click">
+      <li class="not-click" data-rooms-top-menu>
         <a href="#">Rooms</a>
         <ul class="dropdown">
           <li><a href="#" data-rooms-list-option>Rooms list</a></li>
           <li><a href="#" data-room-join-option>Join by name</a></li>
         </ul>
       </li>
-    </ul>
-
-    <!-- Left Nav Section -->
-    <ul class="left">
-      <li><a href="#">Left option</a></li>
+      <li class="has-dropdown not-click" data-disconnected-top-menu>
+        <a href="#">Disconnected</a>
+        <ul class="dropdown">
+          <li><a href="#" data-connect>Connect</a></li>
+        </ul>
+      </li>
+      <li class="has-dropdown not-click" data-reconnecting-top-menu style="display: none">
+        <a href="#">Reconnecting as <span data-nickname>&nbsp;</span></a>
+        <ul class="dropdown">
+          <li><a href="#" data-disconnect>Full disconnect</a></li>
+        </ul>
+      </li>
+      <li class="has-dropdown not-click active" data-connected-top-menu style="display: none">
+        <a href="#">Connected as <span data-nickname>&nbsp;</span></a>
+        <ul class="dropdown">
+          <li><a href="#" data-disconnect>Disconnect</a></li>
+        </ul>
+      </li>
     </ul>
   </section>
 </nav>

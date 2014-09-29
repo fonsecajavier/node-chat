@@ -22,6 +22,7 @@ NodeChat.ClientApp = Class.extend({
 
     this.socket.on('connect', function() {
       console.log("Connected");
+      _this.mediator.publish("chatApp:connected");
       _this.mediator.publish("clientConnected");
       callback();
     });
@@ -31,6 +32,52 @@ NodeChat.ClientApp = Class.extend({
       if(message.roomToken){
         _this.mediator.publish("chatRoom:message:" + message.roomToken, message);
       }
+    });
+
+    this.socket.on('disconnect', function(msg) {
+      console.log("clientDisconnected: " + msg);
+      _this.mediator.publish("chatApp:disconnected", msg);
+    });
+
+    this.socket.on('reconnect', function(number) {
+      _this.mediator.publish("chatApp:reconnect");
+    });
+
+    this.socket.on('error', function(msg) {
+      if(msg == "Invalid token"){
+        _this.socket.io.disconnect();
+        _this.mediator.publish("chatApp:invalidToken");
+      }
+    });
+
+/*
+
+    this.socket.on('connect_failed', function(error) {
+      console.log(error);
+      debugger;
+    });
+
+    this.socket.on('connect_error', function(error) {
+      console.log(error);
+      debugger;
+    });
+
+    this.socket.on('reconnect_error', function(error) {
+      console.log(error);
+      debugger;
+    });
+
+    this.socket.on('reconnecting', function(number) {
+      console.log("reconnecting " + number);
+      debugger;
+    });
+*/
+  },
+
+  friendlyDisconnect: function(){
+    var _this = this;
+    this.socket.json.send({type: "disconnectClient"}, function(ackData){
+      _this.socket.io.disconnect();
     });
   },
 
